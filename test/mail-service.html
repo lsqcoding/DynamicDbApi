@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DynamicDbApi - 邮件服务测试</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f8f9fa;
+        }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            padding: 48px 0 0;
+            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+            overflow-y: auto;
+            width: 250px;
+        }
+        .sidebar-sticky {
+            position: relative;
+            top: 0;
+            height: calc(100vh - 48px);
+            padding-top: .5rem;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+        .nav-link.active {
+            background-color: #e9ecef;
+            color: #495057;
+            font-weight: 500;
+        }
+        .card {
+            margin-bottom: 20px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .05);
+        }
+        .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+        .form-label {
+            font-weight: 500;
+        }
+        .api-endpoint {
+            background-color: #e9ecef;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            margin-bottom: 15px;
+            word-break: break-all;
+        }
+        .method-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        .badge-post { background-color: #2196f3; color: white; }
+        .badge-get { background-color: #4caf50; color: white; }
+        .badge-put { background-color: #ff9800; color: white; }
+        .badge-delete { background-color: #f44336; color: white; }
+        .badge-websocket { background-color: #9c27b0; color: white; }
+        .loading-indicator {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        .loading-spinner {
+            width: 3rem;
+            height: 3rem;
+        }
+        .nav-link {
+            transition: all 0.2s ease;
+        }
+        .nav-link:hover {
+            background-color: #f1f3f5;
+        }
+        .result-success {
+            border-left: 4px solid #28a745;
+        }
+        .result-error {
+            border-left: 4px solid #dc3545;
+        }
+        .result-warning {
+            border-left: 4px solid #ffc107;
+        }
+        .tabs-nav .nav-link {
+            border: 1px solid transparent;
+            border-top-left-radius: 0.25rem;
+            border-top-right-radius: 0.25rem;
+        }
+        .tabs-nav .nav-link.active {
+            color: #495057;
+            background-color: #fff;
+            border-color: #dee2e6 #dee2e6 #fff;
+        }
+        .code-block {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            overflow-x: auto;
+            white-space: pre;
+            margin: 10px 0;
+        }
+        .attachment-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            margin-bottom: 5px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .attachment-item .filename {
+            flex-grow: 1;
+            margin-left: 8px;
+            font-size: 14px;
+        }
+        .attachment-item .size {
+            font-size: 12px;
+            color: #6c757d;
+            margin-right: 8px;
+        }
+        .attachment-item .remove-btn {
+            color: #dc3545;
+            cursor: pointer;
+        }
+        .attachment-item .remove-btn:hover {
+            color: #c82333;
+        }
+        .template-list-item {
+            padding: 12px;
+            border-bottom: 1px solid #dee2e6;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .template-list-item:hover {
+            background-color: #f8f9fa;
+        }
+        .template-list-item.active {
+            background-color: #e3f2fd;
+            border-left: 3px solid #007bff;
+        }
+        .template-list-item:last-child {
+            border-bottom: none;
+        }
+        .template-title {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        .template-description {
+            font-size: 14px;
+            color: #6c757d;
+        }
+        .variable-item {
+            display: inline-block;
+            background-color: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin: 2px;
+            cursor: pointer;
+        }
+        .variable-item:hover {
+            background-color: #dee2e6;
+        }
+        .config-test-result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+        .test-success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .test-error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .email-preview {
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 15px;
+            background-color: white;
+        }
+        .email-preview-header {
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        .email-preview-subject {
+            font-weight: 500;
+            color: #495057;
+        }
+        .email-preview-content {
+            min-height: 200px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <!-- 侧边导航 -->
+    <nav class="col-md-3 col-lg-2 d-md-block sidebar bg-light">
+        <div class="sidebar-sticky">
+            <div class="p-4 border-bottom">
+                <h5 class="font-weight-bold">DynamicDbApi</h5>
+                <p class="text-sm text-muted">功能测试平台</p>
+            </div>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="index.html">
+                        <i class="fa fa-dashboard mr-2"></i>
+                        测试平台首页
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="db-connection.html">
+                        <i class="fa fa-database mr-2"></i>
+                        多数据库连接测试
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="dynamic-query.html">
+                        <i class="fa fa-search mr-2"></i>
+                        动态JSON查询测试
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="real-time-message.html">
+                        <i class="fa fa-comments mr-2"></i>
+                        实时消息系统测试
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="mail-service.html">
+                        <i class="fa fa-envelope mr-2"></i>
+                        邮件服务测试
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="scheduler.html">
+                        <i class="fa fa-clock-o mr-2"></i>
+                        定时任务系统测试
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="file-management.html">
+                        <i class="fa fa-folder mr-2"></i>
+                        文件管理功能测试
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- 主要内容区域 -->
+    <main class="main-content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="mb-4">
+                        <h1 class="h2">邮件服务测试</h1>
+                        <p class="text-muted">测试DynamicDbApi的邮件服务功能，包括发送邮件、模板管理和配置测试</p>
+                    </div>
+
+                    <!-- 选项卡导航 -->
+                    <div class="mb-4">
+                        <ul class="nav tabs-nav" id="mailTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="send-mail-tab" data-bs-toggle="tab" data-bs-target="#send-mail" type="button" role="tab">
+                                    <i class="fa fa-paper-plane mr-1"></i>
+                                    发送邮件
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="templates-tab" data-bs-toggle="tab" data-bs-target="#templates" type="button" role="tab">
+                                    <i class="fa fa-file-text-o mr-1"></i>
+                                    邮件模板
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="config-tab" data-bs-toggle="tab" data-bs-target="#config" type="button" role="tab">
+                                    <i class="fa fa-cog mr-1"></i>
+                                    邮件配置
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="mail-api-tab" data-bs-toggle="tab" data-bs-target="#mail-api" type="button" role="tab">
+                                    <i class="fa fa-code mr-1"></i>
+                                    邮件API
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- 选项卡内容 -->
+                    <div class="tab-content" id="mailTabsContent">
+                        <!-- 发送邮件选项卡 -->
+                        <div class="tab-pane fade show active" id="send-mail" role="tabpanel">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">发送测试邮件</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form id="sendMailForm">
+                                        <!-- 基础信息 -->
+                                        <div class="mb-4">
+                                            <h6>基础信息</h6>
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="fromAddress" class="form-label">发件人</label>
+                                                    <input type="email" class="form-control" id="fromAddress" 
+                                                           placeholder="from@example.com" value="no-reply@example.com">
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="toAddress" class="form-label">收件人 <span class="text-danger">*</span></label>
+                                                    <input type="email" class="form-control" id="toAddress" 
+                                                           placeholder="recipient@example.com" required>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="ccAddress" class="form-label">抄送人 (可选)</label>
+                                                    <input type="email" class="form-control" id="ccAddress" 
+                                                           placeholder="cc@example.com">
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="bccAddress" class="form-label">密送人 (可选)</label>
+                                                    <input type="email" class="form-control" id="bccAddress" 
+                                                           placeholder="bcc@example.com">
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="subject" class="form-label">邮件主题 <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" id="subject" 
+                                                       placeholder="邮件主题" value="测试邮件" required>
+                                            </div>
+                                        </div>
+
+                                        <!-- 邮件内容 -->
+                                        <div class="mb-4">
+                                            <h6>邮件内容</h6>
+                                            <div class="mb-3">
+                                                <label for="contentType" class="form-label">内容类型</label>
+                                                <select class="form-select" id="contentType">
+                                                    <option value="text/plain">纯文本</option>
+                                                    <option value="text/html" selected>HTML</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="mailContent" class="form-label">邮件正文 <span class="text-danger">*</span></label>
+                                                <textarea class="form-control" id="mailContent" rows="6" required>
+<!DOCTYPE html>
+<html>
+<body>
+    <h2>测试邮件</h2>
+    <p>这是一封测试邮件，用于验证DynamicDbApi的邮件服务功能。</p>
+    <p>发送时间: {{currentDateTime}}</p>
+    <p>此致</p>
+    <p>DynamicDbApi团队</p>
+</body>
+</html>
+                                                </textarea>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">可用变量</label>
+                                                <div id="templateVariables">
+                                                    <span class="variable-item" onclick="insertVariable('{{currentDateTime}}')">{{currentDateTime}}</span>
+                                                    <span class="variable-item" onclick="insertVariable('{{userName}}')">{{userName}}</span>
+                                                    <span class="variable-item" onclick="insertVariable('{{userEmail}}')">{{userEmail}}</span>
+                                                    <span class="variable-item" onclick="insertVariable('{{appName}}')">{{appName}}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- 附件 -->
+                                        <div class="mb-4">
+                                            <h6>附件 (可选)</h6>
+                                            <div class="mb-3">
+                                                <input type="file" class="form-control" id="attachmentFile" multiple>
+                                            </div>
+                                            <div id="attachmentList" class="mt-2">
+                                                <!-- 附件列表将在这里动态显示 -->
+                                            </div>
+                                        </div>
+
+                                        <!-- 变量替换 -->
+                                        <div class="mb-4">
+                                            <h6>变量替换</h6>
+                                            <div id="variablesContainer">
+                                                <div class="variable-row mb-2">
+                                                    <div class="row">
+                                                        <div class="col-md-5">
+                                                            <input type="text" class="form-control" placeholder="变量名" value="currentDateTime">
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <input type="text" class="form-control" placeholder="变量值" value="2024-01-01 12:00:00">
+                                                        </div>
+                                                        <div class="col-md-1">
+                                                            <button type="button" class="btn btn-danger remove-variable"><i class="fa fa-trash"></i></button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="variable-row mb-2">
+                                                    <div class="row">
+                                                        <div class="col-md-5">
+                                                            <input type="text" class="form-control" placeholder="变量名" value="userName">
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <input type="text" class="form-control" placeholder="变量值" value="测试用户">
+                                                        </div>
+                                                        <div class="col-md-1">
+                                                            <button type="button" class="btn btn-danger remove-variable"><i class="fa fa-trash"></i></button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="addVariableBtn">
+                                                <i class="fa fa-plus mr-1"></i>
+                                                添加变量
+                                            </button>
+                                        </div>
+
+                                        <!-- 发送选项 -->
+                                        <div class="mb-4">
+                                            <h6>发送选项</h6>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="saveToOutbox">
+                                                <label class="form-check-label" for="saveToOutbox">
+                                                    保存到发件箱
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="trackDelivery">
+                                                <label class="form-check-label" for="trackDelivery">
+                                                    跟踪邮件投递状态
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <!-- 预览和发送按钮 -->
+                                        <div class="mt-4">
+                                            <div class="d-flex gap-2">
+                                                <button type="button" class="btn btn-outline-primary" id="previewBtn" onclick="previewEmail()">
+                                                    <i class="fa fa-eye mr-1"></i>
+                                                    预览邮件
+                                                </button>
+                                                <button type="submit" class="btn btn-primary" id="sendBtn">
+                                                    <i class="fa fa-paper-plane mr-1"></i>
+                                                    发送邮件
+                                                </button>
+                                                <button type="reset" class="btn btn-secondary">
+                                                    <i class="fa fa-refresh mr-1"></i>
+                                                    重置
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+
+                                    <!-- 邮件预览区域 -->
+                                    <div id="emailPreview" class="email-preview mt-4" style="display: none;">
+                                        <div class="email-preview-header">
+                                            <div class="email-preview-subject"></div>
+                                            <div class="text-sm text-muted mt-1">
+                                                <span id="previewFrom"></span> → <span id="previewTo"></span>
+                                            </div>
+                                        </div>
+                                        <div class="email-preview-content"></div>
+                                    </div>
+
+                                    <!-- 发送结果区域 -->
+                                    <div id="sendResult" class="mt-4" style="display: none;">
+                                        <div class="alert" id="resultAlert"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 邮件模板选项卡 -->
+                        <div class="tab-pane fade" id="templates" role="tabpanel">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">邮件模板管理</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <!-- 模板列表 -->
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control" id="templateSearch" placeholder="搜索模板...">
+                                                    <button type="button" class="btn btn-outline-secondary">
+                                                        <i class="fa fa-search"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="border rounded" style="height: 500px; overflow-y: auto;">
+                                                <div class="template-list-item active">
+                                                    <div class="template-title">账户激活</div>
+                                                    <div class="template-description">用户注册后的账户激活邮件</div>
+                                                </div>
+                                                <div class="template-list-item">
+                                                    <div class="template-title">密码重置</div>
+                                                    <div class="template-description">密码重置请求邮件</div>
+                                                </div>
+                                                <div class="template-list-item">
+                                                    <div class="template-title">订单确认</div>
+                                                    <div class="template-description">订单创建确认邮件</div>
+                                                </div>
+                                                <div class="template-list-item">
+                                                    <div class="template-title">系统通知</div>
+                                                    <div class="template-description">系统状态和重要更新通知</div>
+                                                </div>
+                                                <div class="template-list-item">
+                                                    <div class="template-title">周报报表</div>
+                                                    <div class="template-description">每周数据报表邮件</div>
+                                                </div>
+                                            </div>
+                                            <div class="mt-3">
+                                                <button type="button" class="btn btn-primary w-100" id="loadTemplatesBtn">
+                                                    <i class="fa fa-refresh mr-1"></i>
+                                                    加载模板列表
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- 模板编辑器 -->
+                                        <div class="col-md-8">
+                                            <form id="templateForm">
+                                                <div class="mb-3">
+                                                    <label for="templateName" class="form-label">模板名称 <span class="text-danger">*</span></label>
+                                                    <input type="text" class="form-control" id="templateName" 
+                                                           placeholder="输入模板名称" value="账户激活">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="templateDescription" class="form-label">模板描述</label>
+                                                    <input type="text" class="form-control" id="templateDescription" 
+                                                           placeholder="输入模板描述" value="用户注册后的账户激活邮件">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="templateSubject" class="form-label">邮件主题 <span class="text-danger">*</span></label>
+                                                    <input type="text" class="form-control" id="templateSubject" 
+                                                           placeholder="输入邮件主题" value="请激活您的账户 - {{appName}}">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="templateContentType" class="form-label">内容类型</label>
+                                                    <select class="form-select" id="templateContentType">
+                                                        <option value="text/plain">纯文本</option>
+                                                        <option value="text/html" selected>HTML</option>
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="templateContent" class="form-label">模板内容 <span class="text-danger">*</span></label>
+                                                    <textarea class="form-control" id="templateContent" rows="10" required>
+<!DOCTYPE html>
+<html>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #007bff;">{{appName}}</h1>
+        </div>
+        
+        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px;">
+            <h2>欢迎您，{{userName}}！</h2>
+            
+            <p>感谢您注册{{appName}}账户。为了完成注册流程，请点击下方按钮激活您的账户：</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{{activationUrl}}" style="display: inline-block; background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+                    激活账户
+                </a>
+            </div>
+            
+            <p>如果您没有进行此注册，请忽略此邮件。</p>
+            
+            <p>激活链接将在24小时后过期。</p>
+        </div>
+        
+        <div style="margin-top: 30px; text-align: center; color: #666; font-size: 14px;">
+            <p>© {{currentYear}} {{appName}}. 保留所有权利。</p>
+        </div>
+    </div>
+</body>
+</html>
+                                                </textarea>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">模板变量</label>
+                                                <div id="templateVariables" class="d-flex flex-wrap">
+                                                    <span class="variable-item" onclick="insertTemplateVariable('{{userName}}')">{{userName}}</span>
+                                                    <span class="variable-item" onclick="insertTemplateVariable('{{activationUrl}}')">{{activationUrl}}</span>
+                                                    <span class="variable-item" onclick="insertTemplateVariable('{{appName}}')">{{appName}}</span>
+                                                    <span class="variable-item" onclick="insertTemplateVariable('{{currentYear}}')">{{currentYear}}</span>
+                                                    <span class="variable-item" onclick="insertTemplateVariable('{{expireTime}}')">{{expireTime}}</span>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex gap-2 mt-4">
+                                                <button type="button" class="btn btn-outline-primary" onclick="saveTemplate()">
+                                                    <i class="fa fa-save mr-1"></i>
+                                                    保存模板
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary" onclick="deleteTemplate()">
+                                                    <i class="fa fa-trash mr-1"></i>
+                                                    删除模板
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary" onclick="createNewTemplate()">
+                                                    <i class="fa fa-plus mr-1"></i>
+                                                    新建模板
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary" onclick="previewTemplate()">
+                                                    <i class="fa fa-eye mr-1"></i>
+                                                    预览模板
+                                                </button>
+                                            </div>
+                                        </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 邮件配置选项卡 -->
+                        <div class="tab-pane fade" id="config" role="tabpanel">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">邮件服务器配置</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form id="mailConfigForm">
+                                        <div class="mb-4">
+                                            <h6>SMTP服务器配置</h6>
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="smtpServer" class="form-label">SMTP服务器地址 <span class="text-danger">*</span></label>
+                                                    <input type="text" class="form-control" id="smtpServer" 
+                                                           placeholder="smtp.example.com" value="smtp.example.com" required>
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="smtpPort" class="form-label">SMTP服务器端口 <span class="text-danger">*</span></label>
+                                                    <input type="number" class="form-control" id="smtpPort" 
+                                                           placeholder="端口号" value="587" required>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="smtpUsername" class="form-label">用户名 <span class="text-danger">*</span></label>
+                                                    <input type="text" class="form-control" id="smtpUsername" 
+                                                           placeholder="SMTP用户名" value="username@example.com" required>
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="smtpPassword" class="form-label">密码 <span class="text-danger">*</span></label>
+                                                    <input type="password" class="form-control" id="smtpPassword" 
+                                                           placeholder="SMTP密码" value="password" required>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-4 mb-3">
+                                                    <label for="smtpEncryption" class="form-label">加密方式</label>
+                                                    <select class="form-select" id="smtpEncryption">
+                                                        <option value="None">无</option>
+                                                        <option value="SSL">SSL</option>
+                                                        <option value="TLS" selected>TLS</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label for="smtpTimeout" class="form-label">超时时间(秒)</label>
+                                                    <input type="number" class="form-control" id="smtpTimeout" 
+                                                           placeholder="超时时间" value="30">
+                                                </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label for="smtpRetryCount" class="form-label">重试次数</label>
+                                                    <input type="number" class="form-control" id="smtpRetryCount" 
+                                                           placeholder="重试次数" value="3">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-4">
+                                            <h6>发件人配置</h6>
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="defaultFromAddress" class="form-label">默认发件人地址 <span class="text-danger">*</span></label>
+                                                    <input type="email" class="form-control" id="defaultFromAddress" 
+                                                           placeholder="default@example.com" value="no-reply@example.com" required>
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="defaultFromName" class="form-label">默认发件人名称</label>
+                                                    <input type="text" class="form-control" id="defaultFromName" 
+                                                           placeholder="默认发件人名称" value="DynamicDbApi">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-4">
+                                            <h6>高级选项</h6>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="enableTracking" checked>
+                                                <label class="form-check-label" for="enableTracking">
+                                                    启用邮件跟踪
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="enableQueue" checked>
+                                                <label class="form-check-label" for="enableQueue">
+                                                    启用邮件队列
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="saveSentEmails">
+                                                <label class="form-check-label" for="saveSentEmails">
+                                                    保存已发送邮件
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div class="mt-4">
+                                            <div class="d-flex gap-2">
+                                                <button type="button" class="btn btn-primary" onclick="testSmtpConnection()">
+                                                    <i class="fa fa-plug mr-1"></i>
+                                                    测试SMTP连接
+                                                </button>
+                                                <button type="button" class="btn btn-outline-primary" onclick="saveMailConfig()">
+                                                    <i class="fa fa-save mr-1"></i>
+                                                    保存配置
+                                                </button>
+                                                <button type="reset" class="btn btn-secondary">
+                                                    <i class="fa fa-refresh mr-1"></i>
+                                                    重置
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+
+                                    <!-- 测试结果区域 -->
+                                    <div id="testResult" class="mt-4" style="display: none;">
+                                        <div class="config-test-result" id="testResultContent"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 邮件API选项卡 -->
+                        <div class="tab-pane fade" id="mail-api" role="tabpanel">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">邮件API参考</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-4">
+                                        <h6>1. 发送邮件</h6>
+                                        <div class="api-endpoint">
+                                            <span class="method-badge badge-post">POST</span>
+                                            /Mail/send
+                                        </div>
+                                        <div class="mb-2">
+                                            <strong>请求体:</strong>
+                                            <div class="code-block">
+{
+  "from": {
+    "address": "no-reply@example.com",
+    "name": "DynamicDbApi"
+  },
+  "to": ["user@example.com"],
+  "cc": ["cc@example.com"],
+  "bcc": ["bcc@example.com"],
+  "subject": "测试邮件",
+  "contentType": "text/html",
+  "content": "<h1>测试邮件内容</h1>",
+  "attachments": [
+    {
+      "name": "document.pdf",
+      "content": "base64编码的文件内容",
+      "contentType": "application/pdf"
+    }
+  ],
+  "variables": {
+    "userName": "测试用户",
+    "currentDateTime": "2024-01-01 12:00:00"
+  },
+  "options": {
+    "saveToOutbox": true,
+    "trackDelivery": true
+  }
+}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <strong>响应:</strong>
+                                            <div class="code-block">
+{
+  "success": true,
+  "messageId": "mail-12345",
+  "message": "邮件已成功发送",
+  "timestamp": "2024-01-01T12:00:00Z"
+}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <h6>2. 测试SMTP连接</h6>
+                                        <div class="api-endpoint">
+                                            <span class="method-badge badge-post">POST</span>
+                                            /Mail/test-connection
+                                        </div>
+                                        <div class="mb-2">
+                                            <strong>请求体:</strong>
+                                            <div class="code-block">
+{
+  "server": "smtp.example.com",
+  "port": 587,
+  "username": "username@example.com",
+  "password": "password",
+  "encryption": "TLS",
+  "timeout": 30
+}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <strong>响应:</strong>
+                                            <div class="code-block">
+{
+  "success": true,
+  "message": "SMTP连接测试成功",
+  "details": {
+    "connectionTime": "00:00:01.234"
+  }
+}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <h6>3. 创建/更新邮件模板</h6>
+                                        <div class="api-endpoint">
+                                            <span class="method-badge badge-post">POST</span>
+                                            /Mail/templates
+                                        </div>
+                                        <div class="mb-2">
+                                            <strong>请求体:</strong>
+                                            <div class="code-block">
+{
+  "name": "账户激活",
+  "description": "用户注册后的账户激活邮件",
+  "subject": "请激活您的账户 - {{appName}}",
+  "contentType": "text/html",
+  "content": "<html>邮件内容</html>",
+  "variables": [
+    "userName",
+    "activationUrl",
+    "appName",
+    "expireTime"
+  ]
+}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <strong>响应:</strong>
+                                            <div class="code-block">
+{
+  "success": true,
+  "templateId": "template-12345",
+  "message": "模板保存成功"
+}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <h6>4. 获取邮件模板列表</h6>
+                                        <div class="api-endpoint">
+                                            <span class="method-badge badge-get">GET</span>
+                                            /Mail/templates
+                                        </div>
+                                        <div>
+                                            <strong>响应:</strong>
+                                            <div class="code-block">
+{
+  "templates": [
+    {
+      "id": "template-12345",
+      "name": "账户激活",
+      "description": "用户注册后的账户激活邮件",
+      "createdAt": "2024-01-01T10:00:00Z",
+      "updatedAt": "2024-01-01T10:00:00Z"
+    },
+    {
+      "id": "template-67890",
+      "name": "密码重置",
+      "description": "密码重置请求邮件",
+      "createdAt": "2024-01-02T15:30:00Z",
+      "updatedAt": "2024-01-02T15:30:00Z"
+    }
+  ],
+  "total": 5,
+  "page": 1,
+  "pageSize": 10
+}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Axios for API requests -->
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.7/dist/axios.min.js"></script>
+    <script>
+        // API基础配置
+        const apiConfig = {
+            getBaseUrl: () => {
+                return localStorage.getItem('apiBaseUrl') || 'https://localhost:7042/api';
+            },
+            getAuthToken: () => {
+                return localStorage.getItem('authToken') || '';
+            },
+            getTimeout: () => {
+                return parseInt(localStorage.getItem('requestTimeout')) || 10000;
+            },
+            getIncludeCredentials: () => {
+                return localStorage.getItem('includeCredentials') === 'true';
+            }
+        };
+
+        // 通用API请求函数
+        async function makeApiRequest(endpoint, method = 'GET', data = null, params = null) {
+            const url = `${apiConfig.getBaseUrl()}${endpoint}`;
+            
+            try {
+                const config = {
+                    method,
+                    url,
+                    timeout: apiConfig.getTimeout(),
+                    withCredentials: apiConfig.getIncludeCredentials()
+                };
+                
+                const token = apiConfig.getAuthToken();
+                if (token) {
+                    config.headers = {
+                        Authorization: token
+                    };
+                }
+                
+                if (data) {
+                    config.data = data;
+                }
+                
+                if (params) {
+                    config.params = params;
+                }
+                
+                const response = await axios(config);
+                return response;
+            } catch (error) {
+                alert(`API请求失败: ${error.message}`);
+                throw error;
+            }
+        }
+
+        // 发送邮件
+        async function sendEmail() {
+            const fromAddress = document.getElementById('fromAddress').value;
+            const toAddress = document.getElementById('toAddress').value;
+            const ccAddress = document.getElementById('ccAddress').value;
+            const bccAddress = document.getElementById('bccAddress').value;
+            const subject = document.getElementById('subject').value;
+            const contentType = document.getElementById('contentType').value;
+            const content = document.getElementById('mailContent').value;
+            const saveToOutbox = document.getElementById('saveToOutbox').checked;
+            const trackDelivery = document.getElementById('trackDelivery').checked;
+            
+            // 验证必填字段
+            if (!toAddress || !subject || !content) {
+                alert('请填写所有必填字段');
+                return;
+            }
+            
+            // 构建请求数据
+            const requestData = {
+                from: {
+                    address: fromAddress
+                },
+                to: toAddress ? [toAddress] : [],
+                subject,
+                contentType,
+                content,
+                options: {
+                    saveToOutbox,
+                    trackDelivery
+                }
+            };
+            
+            // 添加可选字段
+            if (ccAddress) requestData.cc = [ccAddress];
+            if (bccAddress) requestData.bcc = [bccAddress];
+            
+            // 获取变量替换值
+            const variableRows = document.querySelectorAll('.variable-row');
+            if (variableRows.length > 0) {
+                const variables = {};
+                variableRows.forEach(row => {
+                    const nameInput = row.querySelector('input:first-child');
+                    const valueInput = row.querySelector('input:nth-child(2)');
+                    if (nameInput && valueInput && nameInput.value && valueInput.value) {
+                        variables[nameInput.value] = valueInput.value;
+                    }
+                });
+                if (Object.keys(variables).length > 0) {
+                    requestData.variables = variables;
+                }
+            }
+            
+            try {
+                // 显示加载状态
+                showLoading();
+                
+                // 发送请求
+                const response = await makeApiRequest('/Mail/send', 'POST', requestData);
+                
+                // 显示成功结果
+                showSendResult(true, response.data);
+            } catch (error) {
+                // 显示错误结果
+                showSendResult(false, error);
+            } finally {
+                // 隐藏加载状态
+                hideLoading();
+            }
+        }
+
+        // 测试SMTP连接
+        async function testSmtpConnection() {
+            const server = document.getElementById('smtpServer').value;
+            const port = document.getElementById('smtpPort').value;
+            const username = document.getElementById('smtpUsername').value;
+            const password = document.getElementById('smtpPassword').value;
+            const encryption = document.getElementById('smtpEncryption').value;
+            const timeout = document.getElementById('smtpTimeout').value;
+            
+            // 验证必填字段
+            if (!server || !port || !username || !password) {
+                alert('请填写所有必填的SMTP配置字段');
+                return;
+            }
+            
+            // 构建请求数据
+            const requestData = {
+                server,
+                port: parseInt(port),
+                username,
+                password,
+                encryption,
+                timeout: parseInt(timeout)
+            };
+            
+            try {
+                // 显示加载状态
+                showLoading();
+                
+                // 发送请求
+                const response = await makeApiRequest('/Mail/test-connection', 'POST', requestData);
+                
+                // 显示成功结果
+                showTestResult(true, response.data);
+            } catch (error) {
+                // 显示错误结果
+                showTestResult(false, error);
+            } finally {
+                // 隐藏加载状态
+                hideLoading();
+            }
+        }
+
+        // 保存邮件配置
+        async function saveMailConfig() {
+            // 收集表单数据
+            const configData = {
+                smtp: {
+                    server: document.getElementById('smtpServer').value,
+                    port: document.getElementById('smtpPort').value,
+                    username: document.getElementById('smtpUsername').value,
+                    password: document.getElementById('smtpPassword').value,
+                    encryption: document.getElementById('smtpEncryption').value,
+                    timeout: document.getElementById('smtpTimeout').value,
+                    retryCount: document.getElementById('smtpRetryCount').value
+                },
+                defaults: {
+                    fromAddress: document.getElementById('defaultFromAddress').value,
+                    fromName: document.getElementById('defaultFromName').value
+                },
+                options: {
+                    enableTracking: document.getElementById('enableTracking').checked,
+                    enableQueue: document.getElementById('enableQueue').checked,
+                    saveSentEmails: document.getElementById('saveSentEmails').checked
+                }
+            };
+            
+            try {
+                // 显示加载状态
+                showLoading();
+                
+                // 发送请求
+                const response = await makeApiRequest('/Mail/config', 'POST', configData);
+                
+                // 显示成功消息
+                alert('邮件配置保存成功');
+            } catch (error) {
+                // 显示错误消息
+                alert('邮件配置保存失败: ' + error.message);
+            } finally {
+                // 隐藏加载状态
+                hideLoading();
+            }
+        }
+
+        // 保存邮件模板
+        async function saveTemplate() {
+            const name = document.getElementById('templateName').value;
+            const description = document.getElementById('templateDescription').value;
+            const subject = document.getElementById('templateSubject').value;
+            const contentType = document.getElementById('templateContentType').value;
+            const content = document.getElementById('templateContent').value;
+            
+            // 验证必填字段
+            if (!name || !subject || !content) {
+                alert('请填写模板名称、邮件主题和模板内容');
+                return;
+            }
+            
+            // 构建请求数据
+            const requestData = {
+                name,
+                description,
+                subject,
+                contentType,
+                content,
+                variables: [] // 这里可以从界面中提取变量列表
+            };
+            
+            try {
+                // 显示加载状态
+                showLoading();
+                
+                // 发送请求
+                const response = await makeApiRequest('/Mail/templates', 'POST', requestData);
+                
+                // 显示成功消息
+                alert('模板保存成功');
+            } catch (error) {
+                // 显示错误消息
+                alert('模板保存失败: ' + error.message);
+            } finally {
+                // 隐藏加载状态
+                hideLoading();
+            }
+        }
+
+        // 删除邮件模板
+        async function deleteTemplate() {
+            const name = document.getElementById('templateName').value;
+            
+            if (!name) {
+                alert('请选择要删除的模板');
+                return;
+            }
+            
+            if (confirm(`确定要删除模板 "${name}" 吗？`)) {
+                try {
+                    // 显示加载状态
+                    showLoading();
+                    
+                    // 发送请求
+                    const response = await makeApiRequest(`/Mail/templates/${name}`, 'DELETE');
+                    
+                    // 显示成功消息
+                    alert('模板删除成功');
+                    
+                    // 清空表单
+                    createNewTemplate();
+                } catch (error) {
+                    // 显示错误消息
+                    alert('模板删除失败: ' + error.message);
+                } finally {
+                    // 隐藏加载状态
+                    hideLoading();
+                }
+            }
+        }
+
+        // 创建新模板
+        function createNewTemplate() {
+            document.getElementById('templateName').value = '';
+            document.getElementById('templateDescription').value = '';
+            document.getElementById('templateSubject').value = '';
+            document.getElementById('templateContent').value = '';
+        }
+
+        // 预览邮件
+        function previewEmail() {
+            const fromAddress = document.getElementById('fromAddress').value;
+            const toAddress = document.getElementById('toAddress').value;
+            const subject = document.getElementById('subject').value;
+            let content = document.getElementById('mailContent').value;
+            
+            // 应用变量替换
+            const variableRows = document.querySelectorAll('.variable-row');
+            variableRows.forEach(row => {
+                const nameInput = row.querySelector('input:first-child');
+                const valueInput = row.querySelector('input:nth-child(2)');
+                if (nameInput && valueInput && nameInput.value && valueInput.value) {
+                    const variableName = nameInput.value;
+                    const variableValue = valueInput.value;
+                    content = content.replace(new RegExp(`{{${variableName}}}`, 'g'), variableValue);
+                }
+            });
+            
+            // 更新预览区域
+            document.getElementById('emailPreview').style.display = 'block';
+            document.getElementById('emailPreview').querySelector('.email-preview-subject').textContent = subject;
+            document.getElementById('previewFrom').textContent = fromAddress;
+            document.getElementById('previewTo').textContent = toAddress;
+            
+            const contentType = document.getElementById('contentType').value;
+            const previewContent = document.getElementById('emailPreview').querySelector('.email-preview-content');
+            
+            if (contentType === 'text/html') {
+                previewContent.innerHTML = content;
+            } else {
+                previewContent.textContent = content;
+                previewContent.style.whiteSpace = 'pre-wrap';
+            }
+        }
+
+        // 预览模板
+        function previewTemplate() {
+            const subject = document.getElementById('templateSubject').value;
+            let content = document.getElementById('templateContent').value;
+            
+            // 应用示例变量替换
+            content = content
+                .replace(/\{\{userName\}\}/g, '测试用户')
+                .replace(/\{\{activationUrl\}\}/g, 'https://example.com/activate/123456')
+                .replace(/\{\{appName\}\}/g, 'DynamicDbApi')
+                .replace(/\{\{currentYear\}\}/g, new Date().getFullYear())
+                .replace(/\{\{expireTime\}\}/g, '24小时');
+            
+            // 更新预览区域
+            document.getElementById('emailPreview') || (() => {
+                const previewDiv = document.createElement('div');
+                previewDiv.id = 'emailPreview';
+                previewDiv.className = 'email-preview mt-4';
+                previewDiv.innerHTML = `
+                    <div class="email-preview-header">
+                        <div class="email-preview-subject"></div>
+                        <div class="text-sm text-muted mt-1">
+                            <span id="previewFrom"></span> → <span id="previewTo"></span>
+                        </div>
+                    </div>
+                    <div class="email-preview-content"></div>
+                `;
+                document.getElementById('templateForm').after(previewDiv);
+            })();
+            
+            document.getElementById('emailPreview').style.display = 'block';
+            document.getElementById('emailPreview').querySelector('.email-preview-subject').textContent = subject;
+            document.getElementById('previewFrom').textContent = 'no-reply@example.com';
+            document.getElementById('previewTo').textContent = 'user@example.com';
+            
+            const contentType = document.getElementById('templateContentType').value;
+            const previewContent = document.getElementById('emailPreview').querySelector('.email-preview-content');
+            
+            if (contentType === 'text/html') {
+                previewContent.innerHTML = content;
+            } else {
+                previewContent.textContent = content;
+                previewContent.style.whiteSpace = 'pre-wrap';
+            }
+        }
+
+        // 插入变量到邮件内容
+        function insertVariable(variable) {
+            const contentElement = document.getElementById('mailContent');
+            const startPos = contentElement.selectionStart;
+            const endPos = contentElement.selectionEnd;
+            const text = contentElement.value;
+            
+            contentElement.value = text.substring(0, startPos) + variable + text.substring(endPos);
+            
+            // 设置光标位置到插入后的变量后
+            contentElement.focus();
+            contentElement.selectionStart = contentElement.selectionEnd = startPos + variable.length;
+        }
+
+        // 插入变量到模板内容
+        function insertTemplateVariable(variable) {
+            const contentElement = document.getElementById('templateContent');
+            const startPos = contentElement.selectionStart;
+            const endPos = contentElement.selectionEnd;
+            const text = contentElement.value;
+            
+            contentElement.value = text.substring(0, startPos) + variable + text.substring(endPos);
+            
+            // 设置光标位置到插入后的变量后
+            contentElement.focus();
+            contentElement.selectionStart = contentElement.selectionEnd = startPos + variable.length;
+        }
+
+        // 添加变量行
+        function addVariableRow() {
+            const container = document.getElementById('variablesContainer');
+            const newRow = document.createElement('div');
+            newRow.className = 'variable-row mb-2';
+            newRow.innerHTML = `
+                <div class="row">
+                    <div class="col-md-5">
+                        <input type="text" class="form-control" placeholder="变量名">
+                    </div>
+                    <div class="col-md-6">
+                        <input type="text" class="form-control" placeholder="变量值">
+                    </div>
+                    <div class="col-md-1">
+                        <button type="button" class="btn btn-danger remove-variable"><i class="fa fa-trash"></i></button>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(newRow);
+            
+            // 添加移除按钮事件
+            newRow.querySelector('.remove-variable').addEventListener('click', function() {
+                container.removeChild(newRow);
+            });
+        }
+
+        // 显示发送结果
+        function showSendResult(success, data) {
+            const resultDiv = document.getElementById('sendResult');
+            const alertDiv = document.getElementById('resultAlert');
+            
+            resultDiv.style.display = 'block';
+            
+            if (success) {
+                alertDiv.className = 'alert alert-success';
+                alertDiv.innerHTML = `
+                    <i class="fa fa-check-circle mr-2"></i>
+                    邮件发送成功！<br>
+                    消息ID: ${data.messageId}<br>
+                    时间戳: ${data.timestamp}
+                `;
+            } else {
+                alertDiv.className = 'alert alert-danger';
+                alertDiv.innerHTML = `
+                    <i class="fa fa-exclamation-circle mr-2"></i>
+                    邮件发送失败！<br>
+                    错误: ${data.message || '未知错误'}
+                `;
+            }
+        }
+
+        // 显示测试结果
+        function showTestResult(success, data) {
+            const resultDiv = document.getElementById('testResult');
+            const contentDiv = document.getElementById('testResultContent');
+            
+            resultDiv.style.display = 'block';
+            
+            if (success) {
+                contentDiv.className = 'config-test-result test-success';
+                contentDiv.innerHTML = `
+                    <div class="mb-2">
+                        <i class="fa fa-check-circle mr-2"></i>
+                        SMTP连接测试成功！
+                    </div>
+                    ${data.details ? `<div>连接时间: ${data.details.connectionTime}</div>` : ''}
+                `;
+            } else {
+                contentDiv.className = 'config-test-result test-error';
+                contentDiv.innerHTML = `
+                    <div class="mb-2">
+                        <i class="fa fa-exclamation-circle mr-2"></i>
+                        SMTP连接测试失败！
+                    </div>
+                    <div>错误: ${data.message || '未知错误'}</div>
+                `;
+            }
+        }
+
+        // 显示加载状态
+        function showLoading() {
+            // 这里可以添加加载指示器显示逻辑
+            console.log('加载中...');
+        }
+
+        // 隐藏加载状态
+        function hideLoading() {
+            // 这里可以添加加载指示器隐藏逻辑
+            console.log('加载完成');
+        }
+
+        // 初始化事件监听器
+        document.addEventListener('DOMContentLoaded', function() {
+            // 发送邮件表单提交
+            document.getElementById('sendMailForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                sendEmail();
+            });
+            
+            // 添加变量按钮点击
+            document.getElementById('addVariableBtn').addEventListener('click', addVariableRow);
+            
+            // 为已有的移除变量按钮添加事件
+            document.querySelectorAll('.remove-variable').forEach(button => {
+                button.addEventListener('click', function() {
+                    const row = this.closest('.variable-row');
+                    if (row) {
+                        row.remove();
+                    }
+                });
+            });
+            
+            // 文件选择变化处理
+            document.getElementById('attachmentFile').addEventListener('change', function(e) {
+                const files = e.target.files;
+                const attachmentList = document.getElementById('attachmentList');
+                
+                // 清空列表
+                attachmentList.innerHTML = '';
+                
+                // 添加文件到列表
+                if (files.length > 0) {
+                    Array.from(files).forEach(file => {
+                        const item = document.createElement('div');
+                        item.className = 'attachment-item';
+                        item.innerHTML = `
+                            <i class="fa fa-paperclip"></i>
+                            <div class="filename">${file.name}</div>
+                            <div class="size">${formatFileSize(file.size)}</div>
+                            <div class="remove-btn"><i class="fa fa-times"></i></div>
+                        `;
+                        
+                        // 添加移除按钮事件
+                        item.querySelector('.remove-btn').addEventListener('click', function() {
+                            item.remove();
+                            // 重置文件输入以允许重新选择相同的文件
+                            if (files.length === 1) {
+                                document.getElementById('attachmentFile').value = '';
+                            }
+                        });
+                        
+                        attachmentList.appendChild(item);
+                    });
+                }
+            });
+            
+            // 加载模板按钮点击
+            document.getElementById('loadTemplatesBtn').addEventListener('click', async function() {
+                try {
+                    const response = await makeApiRequest('/Mail/templates');
+                    // 这里可以更新模板列表
+                    alert(`已加载 ${response.data.templates ? response.data.templates.length : 0} 个模板`);
+                } catch (error) {
+                    alert('加载模板列表失败: ' + error.message);
+                }
+            });
+        });
+
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+    </script>
+</body>
+</html>

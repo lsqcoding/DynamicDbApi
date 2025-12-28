@@ -1,0 +1,77 @@
+{
+  "Version": 1,
+  "Hash": "ohtH4SoazSfpMBeDCpO56/+UEwfXjy5B9ZQCGdpWZ8A=",
+  "Source": "DynamicDbApi",
+  "BasePath": "_content/DynamicDbApi",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [
+    {
+      "Name": "DynamicDbApi\\wwwroot",
+      "Source": "DynamicDbApi",
+      "ContentRoot": "D:\\Dev\\DynamicDbApi\\wwwroot\\",
+      "BasePath": "_content/DynamicDbApi",
+      "Pattern": "**"
+    }
+  ],
+  "Assets": [
+    {
+      "Identity": "D:\\Dev\\DynamicDbApi\\wwwroot\\css\\styles.css",
+      "SourceId": "DynamicDbApi",
+      "SourceType": "Discovered",
+      "ContentRoot": "D:\\Dev\\DynamicDbApi\\wwwroot\\",
+      "BasePath": "_content/DynamicDbApi",
+      "RelativePath": "css/styles.css",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\css\\styles.css"
+    },
+    {
+      "Identity": "D:\\Dev\\DynamicDbApi\\wwwroot\\index.html",
+      "SourceId": "DynamicDbApi",
+      "SourceType": "Discovered",
+      "ContentRoot": "D:\\Dev\\DynamicDbApi\\wwwroot\\",
+      "BasePath": "_content/DynamicDbApi",
+      "RelativePath": "index.html",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\index.html"
+    },
+    {
+      "Identity": "D:\\Dev\\DynamicDbApi\\wwwroot\\js\\app.js",
+      "SourceId": "DynamicDbApi",
+      "SourceType": "Discovered",
+      "ContentRoot": "D:\\Dev\\DynamicDbApi\\wwwroot\\",
+      "BasePath": "_content/DynamicDbApi",
+      "RelativePath": "js/app.js",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\js\\app.js"
+    }
+  ]
+}

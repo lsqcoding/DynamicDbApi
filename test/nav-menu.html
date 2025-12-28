@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试页面导航菜单 - DynamicDbApi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* 导航菜单样式 */
+        :root {
+            --primary-color: #0d6efd;
+            --secondary-color: #6c757d;
+            --success-color: #198754;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #0dcaf0;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --sidebar-width: 250px;
+            --header-height: 60px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f8f9fa;
+            color: #212529;
+        }
+
+        /* 顶部导航样式 */
+        .header {
+            height: var(--header-height);
+            background-color: #fff;
+            border-bottom: 1px solid #dee2e6;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            padding: 0 1rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-brand {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-right: 2rem;
+            text-decoration: none;
+        }
+
+        .header-search {
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .header-search .form-control {
+            border-radius: 20px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        /* 侧边栏导航样式 */
+        .sidebar {
+            width: var(--sidebar-width);
+            position: fixed;
+            top: var(--header-height);
+            bottom: 0;
+            left: 0;
+            background-color: #212529;
+            color: #fff;
+            overflow-y: auto;
+            z-index: 100;
+            transition: transform 0.3s;
+        }
+
+        .sidebar-header {
+            padding: 1rem;
+            border-bottom: 1px solid #333;
+        }
+
+        .sidebar-menu {
+            padding: 0;
+            margin: 0;
+            list-style: none;
+        }
+
+        .sidebar-menu li {
+            border-bottom: 1px solid #333;
+        }
+
+        .sidebar-menu a {
+            display: block;
+            padding: 0.75rem 1rem;
+            color: #adb5bd;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .sidebar-menu a:hover {
+            background-color: #343a40;
+            color: #fff;
+        }
+
+        .sidebar-menu a.active {
+            background-color: var(--primary-color);
+            color: #fff;
+        }
+
+        .sidebar-menu a .icon {
+            margin-right: 0.75rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .sidebar-menu a .badge {
+            float: right;
+        }
+
+        /* 子菜单样式 */
+        .submenu {
+            background-color: #1a1a1a;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .submenu.active {
+            max-height: 500px;
+        }
+
+        .submenu a {
+            padding-left: 2.5rem;
+            font-size: 0.875rem;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        /* 移动端侧边栏切换 */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+        }
+
+        /* 遮罩层 */
+        .overlay {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 99;
+            display: none;
+        }
+
+        .overlay.active {
+            display: block;
+        }
+
+        /* 面包屑导航 */
+        .breadcrumb {
+            background-color: transparent;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0;
+        }
+
+        /* 帮助按钮 */
+        .help-button {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s;
+        }
+
+        .help-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        /* 通知样式 */
+        .notification {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 9999;
+            max-width: 350px;
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* 导航按钮组 */
+        .nav-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* 折叠按钮 */
+        .collapse-sidebar-btn {
+            position: absolute;
+            top: 50%;
+            right: -15px;
+            transform: translateY(-50%);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 101;
+            transition: all 0.3s;
+        }
+
+        .collapse-sidebar-btn:hover {
+            background-color: #0a58ca;
+        }
+
+        /* 折叠后的侧边栏 */
+        .sidebar.collapsed {
+            width: 60px;
+        }
+
+        .sidebar.collapsed .sidebar-header,
+        .sidebar.collapsed .menu-text {
+            display: none;
+        }
+
+        .sidebar.collapsed .sidebar-menu a .icon {
+            margin-right: 0;
+        }
+
+        .sidebar.collapsed + .main-content {
+            margin-left: 60px;
+        }
+
+        /* 适配折叠侧边栏的主内容区域 */
+        .main-content {
+            margin-top: var(--header-height);
+            margin-left: var(--sidebar-width);
+            transition: margin-left 0.3s;
+            padding: 2rem;
+            min-height: calc(100vh - var(--header-height));
+        }
+
+        /* 响应式样式 */
+        @media (max-width: 992px) {
+            .header-search {
+                max-width: 250px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+
+            .header-brand {
+                margin-right: 1rem;
+            }
+
+            .header-actions {
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 遮罩层 -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- 顶部导航 -->
+    <header class="header">
+        <button class="btn btn-outline-secondary me-2" id="sidebarToggle">
+            <i class="fas fa-bars"></i>
+        </button>
+        <a href="index.html" class="header-brand">
+            DynamicDbApi
+        </a>
+        <div class="header-search">
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="搜索API..." id="apiSearch">
+                <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-outline-secondary" title="通知" id="notificationBtn">
+                <i class="fas fa-bell"></i>
+                <span class="badge badge-danger" style="position: absolute; top: 0; right: 0; transform: translate(50%, -50%);">3</span>
+            </button>
+            <button class="btn btn-outline-secondary" title="主题切换" id="themeToggle">
+                <i class="fas fa-moon"></i>
+            </button>
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
+                    <i class="fas fa-user"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#" onclick="showUserProfile()">
+                        <i class="fas fa-user-circle mr-2"></i>个人资料
+                    </a></li>
+                    <li><a class="dropdown-item" href="#" onclick="showSettings()">
+                        <i class="fas fa-cog mr-2"></i>设置
+                    </a></li>
+                    <li><a class="dropdown-item" href="#" onclick="showDocumentation()">
+                        <i class="fas fa-book mr-2"></i>API文档
+                    </a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#" onclick="logout()">
+                        <i class="fas fa-sign-out-alt mr-2"></i>退出登录
+                    </a></li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <!-- 侧边栏导航 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="collapse-sidebar-btn" id="collapseSidebarBtn">
+            <i class="fas fa-chevron-left" id="collapseIcon"></i>
+        </div>
+        <div class="sidebar-header">
+            <h4>API测试工具</h4>
+        </div>
+        <ul class="sidebar-menu">
+            <li>
+                <a href="index.html" id="navIndex">
+                    <span class="icon"><i class="fas fa-home"></i></span>
+                    <span class="menu-text">首页</span>
+                </a>
+            </li>
+            
+            <!-- 数据操作模块 -->
+            <li>
+                <a href="#" class="submenu-toggle" data-target="dataSubmenu">
+                    <span class="icon"><i class="fas fa-database"></i></span>
+                    <span class="menu-text">数据操作</span>
+                    <i class="fas fa-chevron-down float-right" id="dataSubmenuIcon"></i>
+                </a>
+                <ul class="submenu" id="dataSubmenu">
+                    <li><a href="db-connection.html" id="navDbConnection">数据库连接</a></li>
+                    <li><a href="dynamic-query.html" id="navDynamicQuery">动态查询</a></li>
+                </ul>
+            </li>
+            
+            <!-- 通信模块 -->
+            <li>
+                <a href="#" class="submenu-toggle" data-target="communicationSubmenu">
+                    <span class="icon"><i class="fas fa-exchange-alt"></i></span>
+                    <span class="menu-text">通信模块</span>
+                    <i class="fas fa-chevron-down float-right" id="communicationSubmenuIcon"></i>
+                </a>
+                <ul class="submenu" id="communicationSubmenu">
+                    <li><a href="real-time-message.html" id="navRealTimeMessage">实时消息</a></li>
+                    <li><a href="mail-service.html" id="navMailService">邮件服务</a></li>
+                </ul>
+            </li>
+            
+            <!-- 系统功能模块 -->
+            <li>
+                <a href="#" class="submenu-toggle" data-target="systemSubmenu">
+                    <span class="icon"><i class="fas fa-cogs"></i></span>
+                    <span class="menu-text">系统功能</span>
+                    <i class="fas fa-chevron-down float-right" id="systemSubmenuIcon"></i>
+                </a>
+                <ul class="submenu" id="systemSubmenu">
+                    <li><a href="scheduler.html" id="navScheduler">定时任务</a></li>
+                    <li><a href="file-management.html" id="navFileManagement">文件管理</a></li>
+                </ul>
+            </li>
+            
+            <!-- 其他测试页面 -->
+            <li>
+                <a href="#" id="navOther">
+                    <span class="icon"><i class="fas fa-ellipsis-h"></i></span>
+                    <span class="menu-text">其他功能</span>
+                    <span class="badge bg-primary">2</span>
+                </a>
+            </li>
+            
+            <!-- 帮助与支持 -->
+            <li>
+                <a href="#" onclick="showHelp()" id="navHelp">
+                    <span class="icon"><i class="fas fa-question-circle"></i></span>
+                    <span class="menu-text">帮助与支持</span>
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- 帮助按钮 -->
+    <div class="help-button" title="获取帮助" onclick="showHelp()">
+        <i class="fas fa-question"></i>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 导航菜单项数据
+        const navItems = {
+            'index.html': 'navIndex',
+            'db-connection.html': 'navDbConnection',
+            'dynamic-query.html': 'navDynamicQuery',
+            'real-time-message.html': 'navRealTimeMessage',
+            'mail-service.html': 'navMailService',
+            'scheduler.html': 'navScheduler',
+            'file-management.html': 'navFileManagement'
+        };
+
+        // DOM加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化侧边栏切换
+            initSidebarToggle();
+            
+            // 初始化侧边栏折叠功能
+            initSidebarCollapse();
+            
+            // 初始化子菜单切换
+            initSubmenuToggle();
+            
+            // 设置当前活动菜单项
+            setActiveMenuItem();
+            
+            // 初始化搜索功能
+            initSearch();
+            
+            // 初始化通知功能
+            initNotifications();
+            
+            // 初始化主题切换
+            initThemeToggle();
+            
+            // 添加键盘快捷键
+            initKeyboardShortcuts();
+        });
+
+        // 初始化侧边栏切换
+        function initSidebarToggle() {
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
+                document.body.classList.toggle('overflow-hidden');
+            });
+            
+            overlay.addEventListener('click', function() {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+                document.body.classList.remove('overflow-hidden');
+            });
+        }
+
+        // 初始化侧边栏折叠功能
+        function initSidebarCollapse() {
+            const collapseBtn = document.getElementById('collapseSidebarBtn');
+            const sidebar = document.getElementById('sidebar');
+            const collapseIcon = document.getElementById('collapseIcon');
+            
+            collapseBtn.addEventListener('click', function() {
+                sidebar.classList.toggle('collapsed');
+                
+                // 更新折叠图标
+                if (sidebar.classList.contains('collapsed')) {
+                    collapseIcon.classList.remove('fa-chevron-left');
+                    collapseIcon.classList.add('fa-chevron-right');
+                } else {
+                    collapseIcon.classList.remove('fa-chevron-right');
+                    collapseIcon.classList.add('fa-chevron-left');
+                }
+                
+                // 保存折叠状态到localStorage
+                localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+            });
+            
+            // 从localStorage恢复侧边栏状态
+            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            if (isCollapsed) {
+                sidebar.classList.add('collapsed');
+                collapseIcon.classList.remove('fa-chevron-left');
+                collapseIcon.classList.add('fa-chevron-right');
+            }
+        }
+
+        // 初始化子菜单切换
+        function initSubmenuToggle() {
+            const submenuToggles = document.querySelectorAll('.submenu-toggle');
+            
+            submenuToggles.forEach(toggle => {
+                toggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    const targetId = this.getAttribute('data-target');
+                    const submenu = document.getElementById(targetId);
+                    const icon = document.getElementById(targetId + 'Icon');
+                    
+                    // 切换子菜单显示/隐藏
+                    submenu.classList.toggle('active');
+                    
+                    // 更新图标
+                    if (submenu.classList.contains('active')) {
+                        icon.classList.remove('fa-chevron-down');
+                        icon.classList.add('fa-chevron-up');
+                    } else {
+                        icon.classList.remove('fa-chevron-up');
+                        icon.classList.add('fa-chevron-down');
+                    }
+                    
+                    // 保存子菜单状态到localStorage
+                    localStorage.setItem(targetId + 'Open', submenu.classList.contains('active'));
+                });
+                
+                // 从localStorage恢复子菜单状态
+                const targetId = toggle.getAttribute('data-target');
+                const isOpen = localStorage.getItem(targetId + 'Open') === 'true';
+                const submenu = document.getElementById(targetId);
+                const icon = document.getElementById(targetId + 'Icon');
+                
+                if (isOpen) {
+                    submenu.classList.add('active');
+                    icon.classList.remove('fa-chevron-down');
+                    icon.classList.add('fa-chevron-up');
+                }
+            });
+        }
+
+        // 设置当前活动菜单项
+        function setActiveMenuItem() {
+            const currentPath = window.location.pathname;
+            const fileName = currentPath.substring(currentPath.lastIndexOf('/') + 1);
+            
+            // 检查是否是测试目录下的页面
+            if (currentPath.includes('/test/')) {
+                // 移除所有活动状态
+                document.querySelectorAll('.sidebar-menu a').forEach(link => {
+                    link.classList.remove('active');
+                });
+                
+                // 设置当前活动项
+                const activeItemId = navItems[fileName];
+                if (activeItemId) {
+                    const activeItem = document.getElementById(activeItemId);
+                    if (activeItem) {
+                        activeItem.classList.add('active');
+                        
+                        // 如果活动项在子菜单中，展开其父菜单
+                        const parentSubmenu = activeItem.closest('.submenu');
+                        if (parentSubmenu) {
+                            parentSubmenu.classList.add('active');
+                            const submenuIcon = document.getElementById(parentSubmenu.id + 'Icon');
+                            if (submenuIcon) {
+                                submenuIcon.classList.remove('fa-chevron-down');
+                                submenuIcon.classList.add('fa-chevron-up');
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 初始化搜索功能
+        function initSearch() {
+            const searchInput = document.getElementById('apiSearch');
+            const searchBtn = document.getElementById('searchBtn');
+            
+            function performSearch() {
+                const query = searchInput.value.trim().toLowerCase();
+                if (query) {
+                    showNotification('info', `正在搜索: "${query}"`);
+                    // 在实际项目中，这里可以实现API搜索功能
+                }
+            }
+            
+            searchBtn.addEventListener('click', performSearch);
+            
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    performSearch();
+                }
+            });
+        }
+
+        // 初始化通知功能
+        function initNotifications() {
+            const notificationBtn = document.getElementById('notificationBtn');
+            
+            notificationBtn.addEventListener('click', function() {
+                showNotification('success', '通知功能测试成功！');
+                // 在实际项目中，这里可以显示通知列表
+            });
+        }
+
+        // 初始化主题切换
+        function initThemeToggle() {
+            const themeToggle = document.getElementById('themeToggle');
+            const icon = themeToggle.querySelector('i');
+            
+            // 检查本地存储中的主题设置
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            }
+            
+            themeToggle.addEventListener('click', function() {
+                document.body.classList.toggle('dark-theme');
+                
+                if (document.body.classList.contains('dark-theme')) {
+                    icon.classList.remove('fa-moon');
+                    icon.classList.add('fa-sun');
+                    localStorage.setItem('theme', 'dark');
+                    showNotification('info', '已切换到深色主题');
+                } else {
+                    icon.classList.remove('fa-sun');
+                    icon.classList.add('fa-moon');
+                    localStorage.setItem('theme', 'light');
+                    showNotification('info', '已切换到浅色主题');
+                }
+            });
+        }
+
+        // 添加键盘快捷键
+        function initKeyboardShortcuts() {
+            document.addEventListener('keydown', function(e) {
+                // Alt + S 打开侧边栏
+                if (e.altKey && e.key === 's') {
+                    e.preventDefault();
+                    document.getElementById('sidebar').classList.toggle('active');
+                    document.getElementById('overlay').classList.toggle('active');
+                }
+                
+                // Alt + F 打开搜索
+                if (e.altKey && e.key === 'f') {
+                    e.preventDefault();
+                    document.getElementById('apiSearch').focus();
+                }
+                
+                // Alt + H 显示帮助
+                if (e.altKey && e.key === 'h') {
+                    e.preventDefault();
+                    showHelp();
+                }
+            });
+        }
+
+        // 显示通知
+        function showNotification(type, message) {
+            const notificationTypes = {
+                success: 'success',
+                error: 'danger',
+                warning: 'warning',
+                info: 'info'
+            };
+            
+            const notificationClasses = {
+                success: 'alert-success',
+                error: 'alert-danger',
+                warning: 'alert-warning',
+                info: 'alert-info'
+            };
+            
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                warning: 'fa-exclamation-triangle',
+                info: 'fa-info-circle'
+            };
+            
+            // 创建通知元素
+            const alert = document.createElement('div');
+            alert.className = `alert ${notificationClasses[type]} alert-dismissible fade show notification`;
+            alert.role = 'alert';
+            alert.innerHTML = `
+                <i class="fas ${icons[type]} mr-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            
+            // 添加到页面
+            document.body.appendChild(alert);
+            
+            // 自动关闭通知
+            setTimeout(() => {
+                alert.classList.remove('show');
+                setTimeout(() => {
+                    if (document.body.contains(alert)) {
+                        document.body.removeChild(alert);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // 显示帮助
+        function showHelp() {
+            showNotification('info', '帮助文档正在加载...');
+            // 在实际项目中，这里可以打开帮助文档模态框
+        }
+
+        // 显示用户资料
+        function showUserProfile() {
+            showNotification('info', '用户资料页面正在加载...');
+        }
+
+        // 显示设置
+        function showSettings() {
+            showNotification('info', '设置页面正在加载...');
+        }
+
+        // 显示文档
+        function showDocumentation() {
+            showNotification('info', 'API文档正在加载...');
+        }
+
+        // 退出登录
+        function logout() {
+            if (confirm('确定要退出登录吗？')) {
+                showNotification('info', '正在退出登录...');
+                // 在实际项目中，这里可以实现退出登录逻辑
+            }
+        }
+    </script>
+</body>
+</html>

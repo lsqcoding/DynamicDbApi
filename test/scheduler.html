@@ -1,0 +1,2164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DynamicDbApi - 定时任务系统测试</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f8f9fa;
+        }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            padding: 48px 0 0;
+            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+            overflow-y: auto;
+            width: 250px;
+        }
+        .sidebar-sticky {
+            position: relative;
+            top: 0;
+            height: calc(100vh - 48px);
+            padding-top: .5rem;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+        .nav-link.active {
+            background-color: #e9ecef;
+            color: #495057;
+            font-weight: 500;
+        }
+        .card {
+            margin-bottom: 20px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .05);
+        }
+        .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+        .form-label {
+            font-weight: 500;
+        }
+        .api-endpoint {
+            background-color: #e9ecef;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            margin-bottom: 15px;
+            word-break: break-all;
+        }
+        .method-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        .badge-post { background-color: #2196f3; color: white; }
+        .badge-get { background-color: #4caf50; color: white; }
+        .badge-put { background-color: #ff9800; color: white; }
+        .badge-delete { background-color: #f44336; color: white; }
+        .badge-websocket { background-color: #9c27b0; color: white; }
+        .loading-indicator {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        .loading-spinner {
+            width: 3rem;
+            height: 3rem;
+        }
+        .nav-link {
+            transition: all 0.2s ease;
+        }
+        .nav-link:hover {
+            background-color: #f1f3f5;
+        }
+        .tabs-nav .nav-link {
+            border: 1px solid transparent;
+            border-top-left-radius: 0.25rem;
+            border-top-right-radius: 0.25rem;
+        }
+        .tabs-nav .nav-link.active {
+            color: #495057;
+            background-color: #fff;
+            border-color: #dee2e6 #dee2e6 #fff;
+        }
+        .code-block {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            overflow-x: auto;
+            white-space: pre;
+            margin: 10px 0;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-running { background-color: #d4edda; color: #155724; }
+        .status-paused { background-color: #fff3cd; color: #856404; }
+        .status-completed { background-color: #cce5ff; color: #004085; }
+        .status-failed { background-color: #f8d7da; color: #721c24; }
+        .status-idle { background-color: #e9ecef; color: #495057; }
+        .cron-expression {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #f8f9fa;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .task-item {
+            padding: 12px;
+            border-bottom: 1px solid #dee2e6;
+            transition: background-color 0.2s;
+        }
+        .task-item:hover {
+            background-color: #f8f9fa;
+        }
+        .task-item:last-child {
+            border-bottom: none;
+        }
+        .task-item.active {
+            background-color: #e3f2fd;
+            border-left: 3px solid #007bff;
+        }
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .task-name {
+            font-weight: 500;
+            margin-right: 10px;
+        }
+        .task-description {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 8px;
+        }
+        .task-meta {
+            font-size: 12px;
+            color: #868e96;
+            display: flex;
+            gap: 15px;
+        }
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .execution-history-item {
+            padding: 12px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .execution-history-item:last-child {
+            border-bottom: none;
+        }
+        .execution-info {
+            flex-grow: 1;
+        }
+        .execution-time {
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+        .execution-duration {
+            font-size: 12px;
+            color: #868e96;
+        }
+        .execution-status {
+            min-width: 60px;
+            text-align: center;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        .action-buttons .btn {
+            font-size: 12px;
+            padding: 4px 8px;
+        }
+        .quick-actions {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        .quick-actions .btn {
+            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            font-size: 24px;
+        }
+        .stat-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #6c757d;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        .cron-help-tooltip {
+            max-width: 300px;
+            font-size: 12px;
+        }
+        .cron-help-tooltip .cron-format {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #f8f9fa;
+            padding: 2px 4px;
+            border-radius: 2px;
+            font-size: 11px;
+        }
+        .cron-preview {
+            background-color: #e9ecef;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 侧边导航 -->
+    <nav class="col-md-3 col-lg-2 d-md-block sidebar bg-light">
+        <div class="sidebar-sticky">
+            <div class="p-4 border-bottom">
+                <h5 class="font-weight-bold">DynamicDbApi</h5>
+                <p class="text-sm text-muted">功能测试平台</p>
+            </div>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="index.html">
+                        <i class="fa fa-dashboard mr-2"></i>
+                        测试平台首页
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="db-connection.html">
+                        <i class="fa fa-database mr-2"></i>
+                        多数据库连接测试
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="dynamic-query.html">
+                        <i class="fa fa-search mr-2"></i>
+                        动态JSON查询测试
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="real-time-message.html">
+                        <i class="fa fa-comments mr-2"></i>
+                        实时消息系统测试
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="mail-service.html">
+                        <i class="fa fa-envelope mr-2"></i>
+                        邮件服务测试
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="scheduler.html">
+                        <i class="fa fa-clock-o mr-2"></i>
+                        定时任务系统测试
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="file-management.html">
+                        <i class="fa fa-folder mr-2"></i>
+                        文件管理功能测试
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- 主要内容区域 -->
+    <main class="main-content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="mb-4">
+                        <h1 class="h2">定时任务系统测试</h1>
+                        <p class="text-muted">测试DynamicDbApi的定时任务系统功能，包括任务创建、管理、执行和监控</p>
+                    </div>
+
+                    <!-- 选项卡导航 -->
+                    <div class="mb-4">
+                        <ul class="nav tabs-nav" id="schedulerTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">
+                                    <i class="fa fa-dashboard mr-1"></i>
+                                    任务概览
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="task-list-tab" data-bs-toggle="tab" data-bs-target="#task-list" type="button" role="tab">
+                                    <i class="fa fa-list-ul mr-1"></i>
+                                    任务列表
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="create-task-tab" data-bs-toggle="tab" data-bs-target="#create-task" type="button" role="tab">
+                                    <i class="fa fa-plus-circle mr-1"></i>
+                                    创建任务
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="execution-history-tab" data-bs-toggle="tab" data-bs-target="#execution-history" type="button" role="tab">
+                                    <i class="fa fa-history mr-1"></i>
+                                    执行历史
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="scheduler-api-tab" data-bs-toggle="tab" data-bs-target="#scheduler-api" type="button" role="tab">
+                                    <i class="fa fa-code mr-1"></i>
+                                    调度器API
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="cron-help-tab" data-bs-toggle="tab" data-bs-target="#cron-help" type="button" role="tab">
+                                    <i class="fa fa-question-circle mr-1"></i>
+                                    Cron表达式帮助
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- 选项卡内容 -->
+                    <div class="tab-content" id="schedulerTabsContent">
+                        <!-- 任务概览选项卡 -->
+                        <div class="tab-pane fade show active" id="dashboard" role="tabpanel">
+                            <div class="row mb-4">
+                                <!-- 任务统计卡片 -->
+                                <div class="col-md-2 mb-3">
+                                    <div class="stat-card">
+                                        <div class="stat-number">12</div>
+                                        <div class="stat-label">总任务数</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2 mb-3">
+                                    <div class="stat-card">
+                                        <div class="stat-number" style="color: #28a745;">8</div>
+                                        <div class="stat-label">运行中</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2 mb-3">
+                                    <div class="stat-card">
+                                        <div class="stat-number" style="color: #ffc107;">3</div>
+                                        <div class="stat-label">已暂停</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2 mb-3">
+                                    <div class="stat-card">
+                                        <div class="stat-number" style="color: #dc3545;">1</div>
+                                        <div class="stat-label">已失败</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2 mb-3">
+                                    <div class="stat-card">
+                                        <div class="stat-number">245</div>
+                                        <div class="stat-label">今日执行</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2 mb-3">
+                                    <div class="stat-card">
+                                        <div class="stat-number" style="color: #17a2b8;">99.2%</div>
+                                        <div class="stat-label">成功率</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <!-- 执行趋势图表 -->
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h5 class="card-title">任务执行趋势</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="chart-container">
+                                                <canvas id="executionTrendChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 成功率图表 -->
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h5 class="card-title">执行结果分布</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="chart-container">
+                                                <canvas id="executionResultChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row mt-4">
+                                <!-- 最近执行任务 -->
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h5 class="card-title">最近执行的任务</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="execution-history-list" style="max-height: 400px; overflow-y: auto;">
+                                                <div class="execution-history-item">
+                                                    <div class="execution-info">
+                                                        <div class="task-name">数据同步任务</div>
+                                                        <div class="execution-time">2024-01-15 14:30:00</div>
+                                                        <div class="execution-duration">执行时间: 2.5分钟</div>
+                                                    </div>
+                                                    <div class="execution-status">
+                                                        <span class="status-badge status-completed">成功</span>
+                                                    </div>
+                                                    <div class="action-buttons">
+                                                        <button class="btn btn-outline-secondary" title="查看详情">
+                                                            <i class="fa fa-eye"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div class="execution-history-item">
+                                                    <div class="execution-info">
+                                                        <div class="task-name">报表生成任务</div>
+                                                        <div class="execution-time">2024-01-15 14:00:00</div>
+                                                        <div class="execution-duration">执行时间: 5.2分钟</div>
+                                                    </div>
+                                                    <div class="execution-status">
+                                                        <span class="status-badge status-completed">成功</span>
+                                                    </div>
+                                                    <div class="action-buttons">
+                                                        <button class="btn btn-outline-secondary" title="查看详情">
+                                                            <i class="fa fa-eye"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div class="execution-history-item">
+                                                    <div class="execution-info">
+                                                        <div class="task-name">系统备份任务</div>
+                                                        <div class="execution-time">2024-01-15 12:00:00</div>
+                                                        <div class="execution-duration">执行时间: 15.8分钟</div>
+                                                    </div>
+                                                    <div class="execution-status">
+                                                        <span class="status-badge status-completed">成功</span>
+                                                    </div>
+                                                    <div class="action-buttons">
+                                                        <button class="btn btn-outline-secondary" title="查看详情">
+                                                            <i class="fa fa-eye"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div class="execution-history-item">
+                                                    <div class="execution-info">
+                                                        <div class="task-name">数据清理任务</div>
+                                                        <div class="execution-time">2024-01-15 11:30:00</div>
+                                                        <div class="execution-duration">执行时间: 1.2分钟</div>
+                                                    </div>
+                                                    <div class="execution-status">
+                                                        <span class="status-badge status-failed">失败</span>
+                                                    </div>
+                                                    <div class="action-buttons">
+                                                        <button class="btn btn-outline-secondary" title="查看详情">
+                                                            <i class="fa fa-eye"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div class="execution-history-item">
+                                                    <div class="execution-info">
+                                                        <div class="task-name">用户活跃度统计</div>
+                                                        <div class="execution-time">2024-01-15 11:00:00</div>
+                                                        <div class="execution-duration">执行时间: 0.8分钟</div>
+                                                    </div>
+                                                    <div class="execution-status">
+                                                        <span class="status-badge status-completed">成功</span>
+                                                    </div>
+                                                    <div class="action-buttons">
+                                                        <button class="btn btn-outline-secondary" title="查看详情">
+                                                            <i class="fa fa-eye"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 即将执行的任务 -->
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h5 class="card-title">即将执行的任务</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="task-list" style="max-height: 400px; overflow-y: auto;">
+                                                <div class="task-item">
+                                                    <div class="task-header">
+                                                        <span class="task-name">定时提醒任务</span>
+                                                        <span class="status-badge status-running">运行中</span>
+                                                    </div>
+                                                    <div class="task-description">发送系统定时提醒通知</div>
+                                                    <div class="task-meta">
+                                                        <div class="meta-item">
+                                                            <i class="fa fa-clock-o"></i>
+                                                            <span>下次执行: 15:00:00</span>
+                                                        </div>
+                                                        <div class="meta-item">
+                                                            <i class="fa fa-calendar"></i>
+                                                            <span>*/30 * * * *</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="task-item">
+                                                    <div class="task-header">
+                                                        <span class="task-name">数据聚合任务</span>
+                                                        <span class="status-badge status-running">运行中</span>
+                                                    </div>
+                                                    <div class="task-description">聚合各业务系统数据</div>
+                                                    <div class="task-meta">
+                                                        <div class="meta-item">
+                                                            <i class="fa fa-clock-o"></i>
+                                                            <span>下次执行: 16:00:00</span>
+                                                        </div>
+                                                        <div class="meta-item">
+                                                            <i class="fa fa-calendar"></i>
+                                                            <span>0 * * * *</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="task-item">
+                                                    <div class="task-header">
+                                                        <span class="task-name">缓存清理任务</span>
+                                                        <span class="status-badge status-running">运行中</span>
+                                                    </div>
+                                                    <div class="task-description">清理系统缓存数据</div>
+                                                    <div class="task-meta">
+                                                        <div class="meta-item">
+                                                            <i class="fa fa-clock-o"></i>
+                                                            <span>下次执行: 17:00:00</span>
+                                                        </div>
+                                                        <div class="meta-item">
+                                                            <i class="fa fa-calendar"></i>
+                                                            <span>0 * * * *</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="task-item">
+                                                    <div class="task-header">
+                                                        <span class="task-name">性能监控任务</span>
+                                                        <span class="status-badge status-running">运行中</span>
+                                                    </div>
+                                                    <div class="task-description">监控系统性能指标</div>
+                                                    <div class="task-meta">
+                                                        <div class="meta-item">
+                                                            <i class="fa fa-clock-o"></i>
+                                                            <span>下次执行: 14:45:00</span>
+                                                        </div>
+                                                        <div class="meta-item">
+                                                            <i class="fa fa-calendar"></i>
+                                                            <span>*/15 * * * *</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="task-item">
+                                                    <div class="task-header">
+                                                        <span class="task-name">数据归档任务</span>
+                                                        <span class="status-badge status-paused">已暂停</span>
+                                                    </div>
+                                                    <div class="task-description">归档历史数据到备份库</div>
+                                                    <div class="task-meta">
+                                                        <div class="meta-item">
+                                                            <i class="fa fa-clock-o"></i>
+                                                            <span>下次执行: 20:00:00</span>
+                                                        </div>
+                                                        <div class="meta-item">
+                                                            <i class="fa fa-calendar"></i>
+                                                            <span>0 20 * * *</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 任务列表选项卡 -->
+                        <div class="tab-pane fade" id="task-list" role="tabpanel">
+                            <div class="card">
+                                <div class="card-header">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-6">
+                                            <h5 class="card-title mb-0">定时任务列表</h5>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="taskSearch" placeholder="搜索任务...">
+                                                <button type="button" class="btn btn-outline-secondary">
+                                                    <i class="fa fa-search"></i>
+                                                </button>
+                                                <select class="form-select ml-2" id="taskStatusFilter">
+                                                    <option value="all">所有状态</option>
+                                                    <option value="running">运行中</option>
+                                                    <option value="paused">已暂停</option>
+                                                    <option value="completed">已完成</option>
+                                                    <option value="failed">已失败</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="task-list" style="max-height: 600px; overflow-y: auto;">
+                                        <div class="task-item active">
+                                            <div class="task-header">
+                                                <div>
+                                                    <span class="task-name">数据同步任务</span>
+                                                    <span class="status-badge status-running ml-2">运行中</span>
+                                                </div>
+                                                <div class="action-buttons">
+                                                    <button class="btn btn-outline-secondary" title="暂停任务">
+                                                        <i class="fa fa-pause"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-secondary" title="执行任务">
+                                                        <i class="fa fa-play"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-secondary" title="编辑任务">
+                                                        <i class="fa fa-pencil"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-danger" title="删除任务">
+                                                        <i class="fa fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="task-description">同步多个数据库之间的数据，包括增量和全量同步</div>
+                                            <div class="task-meta">
+                                                <div class="meta-item">
+                                                    <i class="fa fa-calendar"></i>
+                                                    <span class="cron-expression">0 */3 * * *</span>
+                                                </div>
+                                                <div class="meta-item">
+                                                    <i class="fa fa-clock-o"></i>
+                                                    <span>下次执行: 16:00:00</span>
+                                                </div>
+                                                <div class="meta-item">
+                                                    <i class="fa fa-user"></i>
+                                                    <span>创建者: system</span>
+                                                </div>
+                                                <div class="meta-item">
+                                                    <i class="fa fa-refresh"></i>
+                                                    <span>成功率: 100%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="task-item">
+                                            <div class="task-header">
+                                                <div>
+                                                    <span class="task-name">报表生成任务</span>
+                                                    <span class="status-badge status-running ml-2">运行中</span>
+                                                </div>
+                                                <div class="action-buttons">
+                                                    <button class="btn btn-outline-secondary" title="暂停任务">
+                                                        <i class="fa fa-pause"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-secondary" title="执行任务">
+                                                        <i class="fa fa-play"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-secondary" title="编辑任务">
+                                                        <i class="fa fa-pencil"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-danger" title="删除任务">
+                                                        <i class="fa fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="task-description">生成每日业务报表并发送邮件通知相关人员</div>
+                                            <div class="task-meta">
+                                                <div class="meta-item">
+                                                    <i class="fa fa-calendar"></i>
+                                                    <span class="cron-expression">0 */4 * * *</span>
+                                                </div>
+                                                <div class="meta-item">
+                                                    <i class="fa fa-clock-o"></i>
+                                                    <span>下次执行: 17:00:00</span>
+                                                </div>
+                                                <div class="meta-item">
+                                                    <i class="fa fa-user"></i>
+                                                    <span>创建者: admin</span>
+                                                </div>
+                                                <div class="meta-item">
+                                                    <i class="fa fa-refresh"></i>
+                                                    <span>成功率: 98.5%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="task-item">
+                                            <div class="task-header">
+                                                <div>
+                                                    <span class="task-name">系统备份任务</span>
+                                                    <span class="status-badge status-running ml-2">运行中</span>
+                                                </div>
+                                                <div class="action-buttons">
+                                                    <button class="btn btn-outline-secondary" title="暂停任务">
+                                                        <i class="fa fa-pause"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-secondary" title="执行任务">
+                                                        <i class="fa fa-play"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-secondary" title="编辑任务">
+                                                        <i class="fa fa-pencil"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-danger" title="删除任务">
+                                                        <i class="fa fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="task-description">备份系统关键数据和配置文件</div>
+                                            <div class="task-meta">
+                                                <div class="meta-item">
+                                                    <i class="fa fa-calendar"></i>
+                                                    <span class="cron-expression">0 12 * * *</span>
+                                                </div>
+                                                <div class="meta-item">
+                                                    <i class="fa fa-clock-o"></i>
+                                                    <span>下次执行: 2024-01-16 12:00:00</span>
+                                                </div>
+                                                <div class="meta-item">
+                                                    <i class="fa fa-user"></i>
+                                                    <span>创建者: system</span>
+                                                </div>
+                                                <div class="meta-item">
+                                                    <i class="fa fa-refresh"></i>
+                                                    <span>成功率: 99.8%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="task-item">
+                                            <div class="task-header">
+                                                <div>
+                                                    <span class="task-name">数据清理任务</span>
+                                                    <span class="status-badge status-failed ml-2">已失败</span>
+                                                </div>
+                                                <div class="action-buttons">
+                                                    <button class="btn btn-outline-secondary" title="恢复任务">
+                                                        <i class="fa fa-play"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-secondary" title="执行任务">
+                                                        <i class="fa fa-refresh"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-secondary" title="编辑任务">
+                                                        <i class="fa fa-pencil"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-danger" title="删除任务">
+                                                        <i class="fa fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="task-description">清理过期的临时数据和日志记录</div>
+                                            <div class="task-meta">
+                                                <div class="meta-item">
+                                                    <i class="fa fa-calendar"></i>
+                                                    <span class="cron-expression">0 */1 * * *</span>
+                                                </div>
+                                                <div class="meta-item">
+                                                    <i class="fa fa-clock-o"></i>
+                                                    <span>下次执行: 14:45:00</span>
+                                                </div>
+                                                <div class="meta-item">
+                                                    <i class="fa fa-user"></i>
+                                                    <span>创建者: admin</span>
+                                                </div>
+                                                <div class="meta-item">
+                                                    <i class="fa fa-refresh"></i>
+                                                    <span>成功率: 85%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="task-item">
+                                            <div class="task-header">
+                                                <div>
+                                                    <span class="task-name">用户活跃度统计</span>
+                                                    <span class="status-badge status-running ml-2">运行中</span>
+                                                </div>
+                                                <div class="action-buttons">
+                                                    <button class="btn btn-outline-secondary" title="暂停任务">
+                                                        <i class="fa fa-pause"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-secondary" title="执行任务">
+                                                        <i class="fa fa-play"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-secondary" title="编辑任务">
+                                                        <i class="fa fa-pencil"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-danger" title="删除任务">
+                                                        <i class="fa fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="task-description">统计用户活跃度数据并更新缓存</div>
+                                            <div class="task-meta">
+                                                <div class="meta-item">
+                                                    <i class="fa fa-calendar"></i>
+                                                    <span class="cron-expression">0 * * * *</span>
+                                                </div>
+                                                <div class="meta-item">
+                                                    <i class="fa fa-clock-o"></i>
+                                                    <span>下次执行: 15:00:00</span>
+                                                </div>
+                                                <div class="meta-item">
+                                                    <i class="fa fa-user"></i>
+                                                    <span>创建者: analyst</span>
+                                                </div>
+                                                <div class="meta-item">
+                                                    <i class="fa fa-refresh"></i>
+                                                    <span>成功率: 100%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="task-item">
+                                            <div class="task-header">
+                                                <div>
+                                                    <span class="task-name">数据归档任务</span>
+                                                    <span class="status-badge status-paused ml-2">已暂停</span>
+                                                </div>
+                                                <div class="action-buttons">
+                                                    <button class="btn btn-outline-secondary" title="恢复任务">
+                                                        <i class="fa fa-play"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-secondary" title="执行任务">
+                                                        <i class="fa fa-refresh"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-secondary" title="编辑任务">
+                                                        <i class="fa fa-pencil"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-danger" title="删除任务">
+                                                        <i class="fa fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="task-description">归档历史数据到备份库</div>
+                                            <div class="task-meta">
+                                                <div class="meta-item">
+                                                    <i class="fa fa-calendar"></i>
+                                                    <span class="cron-expression">0 20 * * *</span>
+                                                </div>
+                                                <div class="meta-item">
+                                                    <i class="fa fa-clock-o"></i>
+                                                    <span>下次执行: 2024-01-15 20:00:00</span>
+                                                </div>
+                                                <div class="meta-item">
+                                                    <i class="fa fa-user"></i>
+                                                    <span>创建者: dba</span>
+                                                </div>
+                                                <div class="meta-item">
+                                                    <i class="fa fa-refresh"></i>
+                                                    <span>成功率: 99.2%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 创建任务选项卡 -->
+                        <div class="tab-pane fade" id="create-task" role="tabpanel">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">创建定时任务</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form id="createTaskForm">
+                                        <!-- 基础信息 -->
+                                        <div class="mb-4">
+                                            <h6>基础信息</h6>
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="taskName" class="form-label">任务名称 <span class="text-danger">*</span></label>
+                                                    <input type="text" class="form-control" id="taskName" 
+                                                           placeholder="输入任务名称" required>
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="taskGroup" class="form-label">任务分组</label>
+                                                    <input type="text" class="form-control" id="taskGroup" 
+                                                           placeholder="输入任务分组" value="默认分组">
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="taskDescription" class="form-label">任务描述</label>
+                                                <textarea class="form-control" id="taskDescription" rows="3" 
+                                                          placeholder="输入任务描述"></textarea>
+                                            </div>
+                                        </div>
+
+                                        <!-- 触发配置 -->
+                                        <div class="mb-4">
+                                            <h6>触发配置</h6>
+                                            <div class="mb-3">
+                                                <label for="triggerType" class="form-label">触发类型 <span class="text-danger">*</span></label>
+                                                <select class="form-select" id="triggerType" required>
+                                                    <option value="cron">Cron表达式</option>
+                                                    <option value="interval">固定间隔</option>
+                                                    <option value="one-time">一次性执行</option>
+                                                </select>
+                                            </div>
+
+                                            <!-- Cron表达式 -->
+                                            <div id="cronConfig" class="mb-3">
+                                                <label for="cronExpression" class="form-label">Cron表达式 <span class="text-danger">*</span></label>
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control" id="cronExpression" 
+                                                           placeholder="输入Cron表达式" value="0 0 * * *" required>
+                                                    <button type="button" class="btn btn-outline-secondary" id="cronHelpBtn" 
+                                                            data-bs-toggle="tooltip" data-bs-placement="top" 
+                                                            title="Cron格式: 分 时 日 月 周">
+                                                        <i class="fa fa-question-circle"></i>
+                                                    </button>
+                                                </div>
+                                                <div id="cronPreview" class="cron-preview">
+                                                    预览: 每天 00:00 执行
+                                                </div>
+                                            </div>
+
+                                            <!-- 固定间隔 -->
+                                            <div id="intervalConfig" class="mb-3" style="display: none;">
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="intervalValue" class="form-label">间隔值 <span class="text-danger">*</span></label>
+                                                        <input type="number" class="form-control" id="intervalValue" 
+                                                               placeholder="输入间隔值" value="60" min="1" required>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="intervalUnit" class="form-label">时间单位 <span class="text-danger">*</span></label>
+                                                        <select class="form-select" id="intervalUnit" required>
+                                                            <option value="seconds">秒</option>
+                                                            <option value="minutes" selected>分钟</option>
+                                                            <option value="hours">小时</option>
+                                                            <option value="days">天</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- 一次性执行 -->
+                                            <div id="oneTimeConfig" class="mb-3" style="display: none;">
+                                                <label for="executeTime" class="form-label">执行时间 <span class="text-danger">*</span></label>
+                                                <input type="datetime-local" class="form-control" id="executeTime" required>
+                                            </div>
+                                        </div>
+
+                                        <!-- 任务内容 -->
+                                        <div class="mb-4">
+                                            <h6>任务内容</h6>
+                                            <div class="mb-3">
+                                                <label for="taskType" class="form-label">任务类型 <span class="text-danger">*</span></label>
+                                                <select class="form-select" id="taskType" required>
+                                                    <option value="http">HTTP请求</option>
+                                                    <option value="sql">SQL执行</option>
+                                                    <option value="script">脚本执行</option>
+                                                    <option value="function">函数调用</option>
+                                                </select>
+                                            </div>
+
+                                            <!-- HTTP请求 -->
+                                            <div id="httpTaskConfig" class="mb-3">
+                                                <div class="row">
+                                                    <div class="col-md-3 mb-3">
+                                                        <label for="httpMethod" class="form-label">请求方法 <span class="text-danger">*</span></label>
+                                                        <select class="form-select" id="httpMethod">
+                                                            <option value="GET">GET</option>
+                                                            <option value="POST" selected>POST</option>
+                                                            <option value="PUT">PUT</option>
+                                                            <option value="DELETE">DELETE</option>
+                                                            <option value="PATCH">PATCH</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md-9 mb-3">
+                                                        <label for="httpUrl" class="form-label">请求URL <span class="text-danger">*</span></label>
+                                                        <input type="text" class="form-control" id="httpUrl" 
+                                                               placeholder="输入HTTP URL" required>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="httpHeaders" class="form-label">请求头 (JSON格式)</label>
+                                                    <textarea class="form-control" id="httpHeaders" rows="3" 
+                                                              placeholder='{"Content-Type": "application/json", "Authorization": "Bearer token"}'></textarea>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="httpBody" class="form-label">请求体 (JSON格式)</label>
+                                                    <textarea class="form-control" id="httpBody" rows="5" 
+                                                              placeholder='{"key": "value"}'></textarea>
+                                                </div>
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input" type="checkbox" id="httpFollowRedirect">
+                                                    <label class="form-check-label" for="httpFollowRedirect">
+                                                        跟随重定向
+                                                    </label>
+                                                </div>
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input" type="checkbox" id="httpIgnoreSslErrors">
+                                                    <label class="form-check-label" for="httpIgnoreSslErrors">
+                                                        忽略SSL错误
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <!-- SQL执行 -->
+                                            <div id="sqlTaskConfig" class="mb-3" style="display: none;">
+                                                <div class="mb-3">
+                                                    <label for="dbConnection" class="form-label">数据库连接 <span class="text-danger">*</span></label>
+                                                    <select class="form-select" id="dbConnection">
+                                                        <option value="default">默认连接</option>
+                                                        <option value="main">主数据库</option>
+                                                        <option value="backup">备份数据库</option>
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="sqlQuery" class="form-label">SQL语句 <span class="text-danger">*</span></label>
+                                                    <textarea class="form-control" id="sqlQuery" rows="6" 
+                                                              placeholder="输入SQL语句" required></textarea>
+                                                </div>
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input" type="checkbox" id="sqlTransactional">
+                                                    <label class="form-check-label" for="sqlTransactional">
+                                                        使用事务
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <!-- 脚本执行 -->
+                                            <div id="scriptTaskConfig" class="mb-3" style="display: none;">
+                                                <div class="mb-3">
+                                                    <label for="scriptLanguage" class="form-label">脚本语言 <span class="text-danger">*</span></label>
+                                                    <select class="form-select" id="scriptLanguage">
+                                                        <option value="javascript">JavaScript</option>
+                                                        <option value="python">Python</option>
+                                                        <option value="powershell">PowerShell</option>
+                                                        <option value="bash">Bash</option>
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="scriptContent" class="form-label">脚本内容 <span class="text-danger">*</span></label>
+                                                    <textarea class="form-control" id="scriptContent" rows="8" 
+                                                              placeholder="输入脚本内容" required></textarea>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="scriptTimeout" class="form-label">执行超时 (秒)</label>
+                                                    <input type="number" class="form-control" id="scriptTimeout" 
+                                                           placeholder="输入超时时间" value="300" min="1">
+                                                </div>
+                                            </div>
+
+                                            <!-- 函数调用 -->
+                                            <div id="functionTaskConfig" class="mb-3" style="display: none;">
+                                                <div class="mb-3">
+                                                    <label for="functionName" class="form-label">函数名称 <span class="text-danger">*</span></label>
+                                                    <input type="text" class="form-control" id="functionName" 
+                                                           placeholder="输入函数名称" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="functionArgs" class="form-label">函数参数 (JSON格式)</label>
+                                                    <textarea class="form-control" id="functionArgs" rows="4" 
+                                                              placeholder='{"arg1": "value1", "arg2": "value2"}'></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- 高级配置 -->
+                                        <div class="mb-4">
+                                            <h6>高级配置</h6>
+                                            <div class="row">
+                                                <div class="col-md-4 mb-3">
+                                                    <label for="timeout" class="form-label">执行超时 (秒)</label>
+                                                    <input type="number" class="form-control" id="timeout" 
+                                                           placeholder="输入超时时间" value="300" min="1">
+                                                </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label for="maxRetries" class="form-label">最大重试次数</label>
+                                                    <input type="number" class="form-control" id="maxRetries" 
+                                                           placeholder="输入重试次数" value="3" min="0">
+                                                </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label for="retryInterval" class="form-label">重试间隔 (秒)</label>
+                                                    <input type="number" class="form-control" id="retryInterval" 
+                                                           placeholder="输入重试间隔" value="60" min="1">
+                                                </div>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="enabled" checked>
+                                                <label class="form-check-label" for="enabled">
+                                                    创建后立即启用
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="concurrentExecution">
+                                                <label class="form-check-label" for="concurrentExecution">
+                                                    允许并发执行
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="recordExecutionHistory">
+                                                <label class="form-check-label" for="recordExecutionHistory">
+                                                    记录执行历史
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <!-- 告警配置 -->
+                                        <div class="mb-4">
+                                            <h6>告警配置</h6>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="enableAlert">
+                                                <label class="form-check-label" for="enableAlert">
+                                                    启用执行告警
+                                                </label>
+                                            </div>
+                                            <div id="alertConfig" style="display: none;">
+                                                <div class="mb-3">
+                                                    <label for="alertOn" class="form-label">告警触发条件</label>
+                                                    <select class="form-select" id="alertOn">
+                                                        <option value="failure">仅任务失败</option>
+                                                        <option value="success">仅任务成功</option>
+                                                        <option value="all" selected>所有执行</option>
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="alertChannels" class="form-label">告警通知渠道</label>
+                                                    <div class="row">
+                                                        <div class="col-md-4">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox" id="alertEmail">
+                                                                <label class="form-check-label" for="alertEmail">
+                                                                    邮件通知
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox" id="alertWebhook">
+                                                                <label class="form-check-label" for="alertWebhook">
+                                                                    Webhook通知
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox" id="alertMessage">
+                                                                <label class="form-check-label" for="alertMessage">
+                                                                    消息通知
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="alertRecipients" class="form-label">告警接收人</label>
+                                                    <input type="text" class="form-control" id="alertRecipients" 
+                                                           placeholder="输入邮箱地址，多个用逗号分隔">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- 按钮 -->
+                                        <div class="mt-4">
+                                            <div class="d-flex gap-2">
+                                                <button type="button" class="btn btn-outline-secondary" onclick="previewTask()">
+                                                    <i class="fa fa-eye mr-1"></i>
+                                                    预览任务
+                                                </button>
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i class="fa fa-save mr-1"></i>
+                                                    保存任务
+                                                </button>
+                                                <button type="reset" class="btn btn-secondary">
+                                                    <i class="fa fa-refresh mr-1"></i>
+                                                    重置
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 执行历史选项卡 -->
+                        <div class="tab-pane fade" id="execution-history" role="tabpanel">
+                            <div class="card">
+                                <div class="card-header">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-6">
+                                            <h5 class="card-title mb-0">执行历史</h5>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <input type="text" class="form-control" id="historySearch" placeholder="搜索任务...">
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <select class="form-select" id="historyStatusFilter">
+                                                        <option value="all">所有状态</option>
+                                                        <option value="success">成功</option>
+                                                        <option value="failure">失败</option>
+                                                        <option value="running">运行中</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <select class="form-select" id="historyDateFilter">
+                                                        <option value="today">今天</option>
+                                                        <option value="yesterday">昨天</option>
+                                                        <option value="this-week" selected>本周</option>
+                                                        <option value="this-month">本月</option>
+                                                        <option value="custom">自定义...</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="execution-history-list" style="max-height: 600px; overflow-y: auto;">
+                                        <div class="execution-history-item">
+                                            <div class="execution-info">
+                                                <div class="task-name">数据同步任务</div>
+                                                <div class="execution-time">2024-01-15 14:30:00 - 2024-01-15 14:32:30</div>
+                                                <div class="execution-duration">执行时间: 2分30秒 | 同步记录: 1245条</div>
+                                                <div class="mt-2" style="font-size: 14px; color: #6c757d;">
+                                                    <strong>执行结果:</strong> 成功完成数据同步，无错误记录。
+                                                </div>
+                                            </div>
+                                            <div class="execution-status">
+                                                <span class="status-badge status-completed">成功</span>
+                                            </div>
+                                            <div class="action-buttons">
+                                                <button class="btn btn-outline-secondary" title="查看详情">
+                                                    <i class="fa fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-outline-secondary" title="重新执行">
+                                                    <i class="fa fa-refresh"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="execution-history-item">
+                                            <div class="execution-info">
+                                                <div class="task-name">报表生成任务</div>
+                                                <div class="execution-time">2024-01-15 14:00:00 - 2024-01-15 14:05:12</div>
+                                                <div class="execution-duration">执行时间: 5分12秒 | 生成报表: 3份</div>
+                                                <div class="mt-2" style="font-size: 14px; color: #6c757d;">
+                                                    <strong>执行结果:</strong> 报表生成成功，并已发送邮件通知。
+                                                </div>
+                                            </div>
+                                            <div class="execution-status">
+                                                <span class="status-badge status-completed">成功</span>
+                                            </div>
+                                            <div class="action-buttons">
+                                                <button class="btn btn-outline-secondary" title="查看详情">
+                                                    <i class="fa fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-outline-secondary" title="重新执行">
+                                                    <i class="fa fa-refresh"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="execution-history-item">
+                                            <div class="execution-info">
+                                                <div class="task-name">系统备份任务</div>
+                                                <div class="execution-time">2024-01-15 12:00:00 - 2024-01-15 12:15:48</div>
+                                                <div class="execution-duration">执行时间: 15分48秒 | 备份文件: 560MB</div>
+                                                <div class="mt-2" style="font-size: 14px; color: #6c757d;">
+                                                    <strong>执行结果:</strong> 系统备份成功，文件已存储至指定位置。
+                                                </div>
+                                            </div>
+                                            <div class="execution-status">
+                                                <span class="status-badge status-completed">成功</span>
+                                            </div>
+                                            <div class="action-buttons">
+                                                <button class="btn btn-outline-secondary" title="查看详情">
+                                                    <i class="fa fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-outline-secondary" title="重新执行">
+                                                    <i class="fa fa-refresh"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="execution-history-item">
+                                            <div class="execution-info">
+                                                <div class="task-name">数据清理任务</div>
+                                                <div class="execution-time">2024-01-15 11:30:00 - 2024-01-15 11:31:12</div>
+                                                <div class="execution-duration">执行时间: 1分12秒</div>
+                                                <div class="mt-2" style="font-size: 14px; color: #dc3545;">
+                                                    <strong>执行结果:</strong> 任务执行失败。错误信息: 数据库连接超时，请检查网络连接。
+                                                </div>
+                                            </div>
+                                            <div class="execution-status">
+                                                <span class="status-badge status-failed">失败</span>
+                                            </div>
+                                            <div class="action-buttons">
+                                                <button class="btn btn-outline-secondary" title="查看详情">
+                                                    <i class="fa fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-outline-secondary" title="重新执行">
+                                                    <i class="fa fa-refresh"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="execution-history-item">
+                                            <div class="execution-info">
+                                                <div class="task-name">用户活跃度统计</div>
+                                                <div class="execution-time">2024-01-15 11:00:00 - 2024-01-15 11:00:48</div>
+                                                <div class="execution-duration">执行时间: 48秒 | 统计用户: 2453人</div>
+                                                <div class="mt-2" style="font-size: 14px; color: #6c757d;">
+                                                    <strong>执行结果:</strong> 统计完成，数据已更新至缓存。
+                                                </div>
+                                            </div>
+                                            <div class="execution-status">
+                                                <span class="status-badge status-completed">成功</span>
+                                            </div>
+                                            <div class="action-buttons">
+                                                <button class="btn btn-outline-secondary" title="查看详情">
+                                                    <i class="fa fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-outline-secondary" title="重新执行">
+                                                    <i class="fa fa-refresh"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="execution-history-item">
+                                            <div class="execution-info">
+                                                <div class="task-name">数据同步任务</div>
+                                                <div class="execution-time">2024-01-15 11:30:00 - 2024-01-15 11:32:15</div>
+                                                <div class="execution-duration">执行时间: 2分15秒 | 同步记录: 876条</div>
+                                                <div class="mt-2" style="font-size: 14px; color: #6c757d;">
+                                                    <strong>执行结果:</strong> 成功完成数据同步，无错误记录。
+                                                </div>
+                                            </div>
+                                            <div class="execution-status">
+                                                <span class="status-badge status-completed">成功</span>
+                                            </div>
+                                            <div class="action-buttons">
+                                                <button class="btn btn-outline-secondary" title="查看详情">
+                                                    <i class="fa fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-outline-secondary" title="重新执行">
+                                                    <i class="fa fa-refresh"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="execution-history-item">
+                                            <div class="execution-info">
+                                                <div class="task-name">缓存清理任务</div>
+                                                <div class="execution-time">2024-01-15 11:00:00 - 2024-01-15 11:00:32</div>
+                                                <div class="execution-duration">执行时间: 32秒 | 清理缓存: 128MB</div>
+                                                <div class="mt-2" style="font-size: 14px; color: #6c757d;">
+                                                    <strong>执行结果:</strong> 缓存清理完成，系统性能已优化。
+                                                </div>
+                                            </div>
+                                            <div class="execution-status">
+                                                <span class="status-badge status-completed">成功</span>
+                                            </div>
+                                            <div class="action-buttons">
+                                                <button class="btn btn-outline-secondary" title="查看详情">
+                                                    <i class="fa fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-outline-secondary" title="重新执行">
+                                                    <i class="fa fa-refresh"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 分页 -->
+                                    <div class="mt-4 d-flex justify-content-center">
+                                        <nav aria-label="Page navigation">
+                                            <ul class="pagination">
+                                                <li class="page-item disabled">
+                                                    <a class="page-link" href="#" aria-label="Previous">
+                                                        <span aria-hidden="true">&laquo;</span>
+                                                    </a>
+                                                </li>
+                                                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                                                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                                                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                                                <li class="page-item"><a class="page-link" href="#">4</a></li>
+                                                <li class="page-item"><a class="page-link" href="#">5</a></li>
+                                                <li class="page-item">
+                                                    <a class="page-link" href="#" aria-label="Next">
+                                                        <span aria-hidden="true">&raquo;</span>
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </nav>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 调度器API选项卡 -->
+                        <div class="tab-pane fade" id="scheduler-api" role="tabpanel">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">调度器API</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-4">
+                                        <h6>API基础URL</h6>
+                                        <div class="api-endpoint">
+                                            http://localhost:8080/api/scheduler
+                                        </div>
+                                    </div>
+
+                                    <!-- API列表 -->
+                                    <div class="mb-4">
+                                        <h6>任务管理</h6>
+                                        
+                                        <!-- 创建任务 -->
+                                        <div class="mb-4">
+                                            <h7><span class="method-badge badge-post">POST</span> /tasks</h7>
+                                            <p class="mb-2">创建新的定时任务</p>
+                                            <div class="mb-2">
+                                                <strong>请求体:</strong>
+                                                <div class="code-block">
+{"name": "数据同步任务",
+ "group": "默认分组",
+ "description": "同步数据库数据",
+ "trigger": {
+   "type": "cron",
+   "expression": "0 */3 * * *"
+ },
+ "job": {
+   "type": "http",
+   "config": {
+     "method": "POST",
+     "url": "http://api.example.com/sync",
+     "headers": {"Content-Type": "application/json"},
+     "body": {"syncType": "daily"}
+   }
+ },
+ "config": {
+   "timeout": 300,
+   "maxRetries": 3,
+   "enabled": true
+ }}</div>
+                                            </div>
+                                        </div>
+
+                                        <!-- 获取任务列表 -->
+                                        <div class="mb-4">
+                                            <h7><span class="method-badge badge-get">GET</span> /tasks</h7>
+                                            <p class="mb-2">获取任务列表</p>
+                                            <div class="mb-2">
+                                                <strong>查询参数:</strong>
+                                                <ul>
+                                                    <li><code>status</code>: 任务状态过滤 (running, paused, completed, failed)</li>
+                                                    <li><code>group</code>: 任务分组过滤</li>
+                                                    <li><code>page</code>: 页码，默认1</li>
+                                                    <li><code>size</code>: 每页数量，默认20</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+
+                                        <!-- 获取任务详情 -->
+                                        <div class="mb-4">
+                                            <h7><span class="method-badge badge-get">GET</span> /tasks/{taskId}</h7>
+                                            <p class="mb-2">获取任务详情</p>
+                                        </div>
+
+                                        <!-- 更新任务 -->
+                                        <div class="mb-4">
+                                            <h7><span class="method-badge badge-put">PUT</span> /tasks/{taskId}</h7>
+                                            <p class="mb-2">更新任务信息</p>
+                                            <div class="mb-2">
+                                                <strong>请求体:</strong> (与创建任务相同)</div>
+                                        </div>
+
+                                        <!-- 删除任务 -->
+                                        <div class="mb-4">
+                                            <h7><span class="method-badge badge-delete">DELETE</span> /tasks/{taskId}</h7>
+                                            <p class="mb-2">删除任务</p>
+                                        </div>
+
+                                        <!-- 启动任务 -->
+                                        <div class="mb-4">
+                                            <h7><span class="method-badge badge-post">POST</span> /tasks/{taskId}/start</h7>
+                                            <p class="mb-2">启动任务调度</p>
+                                        </div>
+
+                                        <!-- 暂停任务 -->
+                                        <div class="mb-4">
+                                            <h7><span class="method-badge badge-post">POST</span> /tasks/{taskId}/pause</h7>
+                                            <p class="mb-2">暂停任务调度</p>
+                                        </div>
+
+                                        <!-- 立即执行 -->
+                                        <div class="mb-4">
+                                            <h7><span class="method-badge badge-post">POST</span> /tasks/{taskId}/execute</h7>
+                                            <p class="mb-2">立即执行任务</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <h6>执行历史</h6>
+                                        
+                                        <!-- 获取执行历史 -->
+                                        <div class="mb-4">
+                                            <h7><span class="method-badge badge-get">GET</span> /executions</h7>
+                                            <p class="mb-2">获取执行历史列表</p>
+                                            <div class="mb-2">
+                                                <strong>查询参数:</strong>
+                                                <ul>
+                                                    <li><code>taskId</code>: 任务ID过滤</li>
+                                                    <li><code>status</code>: 执行状态过滤 (success, failure, running)</li>
+                                                    <li><code>startTime</code>: 开始时间过滤</li>
+                                                    <li><code>endTime</code>: 结束时间过滤</li>
+                                                    <li><code>page</code>: 页码，默认1</li>
+                                                    <li><code>size</code>: 每页数量，默认20</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+
+                                        <!-- 获取执行详情 -->
+                                        <div class="mb-4">
+                                            <h7><span class="method-badge badge-get">GET</span> /executions/{executionId}</h7>
+                                            <p class="mb-2">获取执行详情</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <h6>调度器管理</h6>
+                                        
+                                        <!-- 获取调度器状态 -->
+                                        <div class="mb-4">
+                                            <h7><span class="method-badge badge-get">GET</span> /status</h7>
+                                            <p class="mb-2">获取调度器运行状态</p>
+                                        </div>
+
+                                        <!-- 启动调度器 -->
+                                        <div class="mb-4">
+                                            <h7><span class="method-badge badge-post">POST</span> /start</h7>
+                                            <p class="mb-2">启动调度器</p>
+                                        </div>
+
+                                        <!-- 停止调度器 -->
+                                        <div class="mb-4">
+                                            <h7><span class="method-badge badge-post">POST</span> /stop</h7>
+                                            <p class="mb-2">停止调度器</p>
+                                        </div>
+
+                                        <!-- 获取统计信息 -->
+                                        <div class="mb-4">
+                                            <h7><span class="method-badge badge-get">GET</span> /statistics</h7>
+                                            <p class="mb-2">获取调度器统计信息</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <h6>实时监控</h6>
+                                        
+                                        <!-- WebSocket监控 -->
+                                        <div class="mb-4">
+                                            <h7><span class="method-badge badge-websocket">WebSocket</span> /ws/monitor</h7>
+                                            <p class="mb-2">实时监控调度器和任务状态</p>
+                                            <div class="mb-2">
+                                                <strong>消息格式:</strong>
+                                                <div class="code-block">
+{"type": "execution_started",
+ "data": {
+   "taskId": "task-123",
+   "taskName": "数据同步任务",
+   "executionId": "exec-456",
+   "timestamp": "2024-01-15T14:30:00Z"
+ }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cron表达式帮助选项卡 -->
+                        <div class="tab-pane fade" id="cron-help" role="tabpanel">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">Cron表达式帮助</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-4">
+                                        <h6>Cron表达式格式</h6>
+                                        <p>Cron表达式由5个或6个空格分隔的字段组成，表示执行的时间规则：</p>
+                                        <div class="code-block text-center">
+秒(可选) 分 时 日 月 周</div>
+                                        <p class="mt-2">通常使用5字段格式（分 时 日 月 周），有些系统支持6字段格式，增加秒字段。</p>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <h6>字段说明</h6>
+                                        <table class="table table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th>字段</th>
+                                                    <th>必填</th>
+                                                    <th>允许的值</th>
+                                                    <th>允许的特殊字符</th>
+                                                    <th>说明</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>秒</td>
+                                                    <td>否</td>
+                                                    <td>0-59</td>
+                                                    <td>, - * /</td>
+                                                    <td>秒（仅部分系统支持）</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>分</td>
+                                                    <td>是</td>
+                                                    <td>0-59</td>
+                                                    <td>, - * /</td>
+                                                    <td>分钟</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>时</td>
+                                                    <td>是</td>
+                                                    <td>0-23</td>
+                                                    <td>, - * /</td>
+                                                    <td>小时</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>日</td>
+                                                    <td>是</td>
+                                                    <td>1-31</td>
+                                                    <td>, - * / ? L W C</td>
+                                                    <td>月份中的日期</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>月</td>
+                                                    <td>是</td>
+                                                    <td>1-12 或 JAN-DEC</td>
+                                                    <td>, - * /</td>
+                                                    <td>月份</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>周</td>
+                                                    <td>是</td>
+                                                    <td>0-7 或 SUN-SAT</td>
+                                                    <td>, - * / ? L C #</td>
+                                                    <td>星期几（0和7都表示星期日）</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <h6>特殊字符说明</h6>
+                                        <ul>
+                                            <li><strong>*</strong>：匹配所有值，表示"每"</li>
+                                            <li><strong>?</strong>：仅在日期和星期字段使用，表示无特定值</li>
+                                            <li><strong>-</strong>：表示范围，如"10-12"表示10,11,12</li>
+                                            <li><strong>,</strong>：表示多个值，如"MON,WED,FRI"表示周一、周三、周五</li>
+                                            <li><strong>/</strong>：表示步长，如"0/15"表示从0开始，每15个单位执行一次</li>
+                                            <li><strong>L</strong>：表示最后，在日期字段表示月最后一天，在星期字段表示周六</li>
+                                            <li><strong>W</strong>：表示工作日，仅在日期字段使用，如"15W"表示15号最近的工作日</li>
+                                            <li><strong>#</strong>：表示第几个星期几，如"2#3"表示第三个星期二</li>
+                                        </ul>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <h6>常用Cron表达式示例</h6>
+                                        <table class="table table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th>Cron表达式</th>
+                                                    <th>含义</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td><code>0 0 * * *</code></td>
+                                                    <td>每天凌晨0点执行</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>0 30 8 * * *</code></td>
+                                                    <td>每天早上8:30执行</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>0 0 12 * * ?</code></td>
+                                                    <td>每天中午12点执行</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>0 0 18 * * MON-FRI</code></td>
+                                                    <td>工作日下午6点执行</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>0 0 0 ? * SAT</code></td>
+                                                    <td>每周六凌晨0点执行</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>0 0 0 1 * ?</code></td>
+                                                    <td>每月1号凌晨0点执行</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>0 0 0 1 1 ?</code></td>
+                                                    <td>每年1月1号凌晨0点执行</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>0 */30 * * * *</code></td>
+                                                    <td>每30分钟执行一次</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>0 0 */2 * * *</code></td>
+                                                    <td>每2小时执行一次</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>0 0 0 L * ?</code></td>
+                                                    <td>每月最后一天凌晨0点执行</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>0 0 0 LW * ?</code></td>
+                                                    <td>每月最后一个工作日凌晨0点执行</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>0 0 0 ? * L</code></td>
+                                                    <td>每周六凌晨0点执行</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>0 0 0 ? * 6L</code></td>
+                                                    <td>每月最后一个星期五凌晨0点执行</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>0 0 0 ? * 5#2</code></td>
+                                                    <td>每月第二个星期四凌晨0点执行</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>0 15 10 ? * MON-FRI</code></td>
+                                                    <td>工作日上午10:15执行</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>0 0/5 * * * *</code></td>
+                                                    <td>每5分钟执行一次</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>0 0 9-17 * * MON-FRI</code></td>
+                                                    <td>工作日9点到17点每小时整点执行</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>0 0 9,12,15 * * *</code></td>
+                                                    <td>每天9点、12点、15点执行</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>0 0 12 1/3 * ?</code></td>
+                                                    <td>从每月1号开始，每3天中午12点执行</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <h6>Cron表达式生成器</h6>
+                                        <div class="p-4 bg-light rounded">
+                                            <div class="row mb-3">
+                                                <div class="col-md-2">
+                                                    <label class="form-label">分钟</label>
+                                                    <select class="form-select" id="cronGenMinute">
+                                                        <option value="*">每分钟</option>
+                                                        <option value="0">0分</option>
+                                                        <option value="15">15分</option>
+                                                        <option value="30">30分</option>
+                                                        <option value="45">45分</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">小时</label>
+                                                    <select class="form-select" id="cronGenHour">
+                                                        <option value="*">每小时</option>
+                                                        <option value="0">0点</option>
+                                                        <option value="6">6点</option>
+                                                        <option value="12">12点</option>
+                                                        <option value="18">18点</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">日期</label>
+                                                    <select class="form-select" id="cronGenDay">
+                                                        <option value="*">每天</option>
+                                                        <option value="1">每月1号</option>
+                                                        <option value="15">每月15号</option>
+                                                        <option value="L">每月最后一天</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">月份</label>
+                                                    <select class="form-select" id="cronGenMonth">
+                                                        <option value="*">每月</option>
+                                                        <option value="1">1月</option>
+                                                        <option value="6">6月</option>
+                                                        <option value="12">12月</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">星期</label>
+                                                    <select class="form-select" id="cronGenWeek">
+                                                        <option value="?">不指定</option>
+                                                        <option value="1">周一</option>
+                                                        <option value="6">周六</option>
+                                                        <option value="0">周日</option>
+                                                        <option value="1-5">工作日</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">生成的Cron表达式</label>
+                                                <input type="text" class="form-control" id="generatedCron" readonly>
+                                            </div>
+                                            <button class="btn btn-primary" onclick="generateCronExpression()">
+                                                <i class="fa fa-refresh mr-1"></i>
+                                                生成Cron表达式
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 快速操作按钮 -->
+    <div class="quick-actions">
+        <button class="btn btn-primary" title="创建新任务" onclick="switchToCreateTaskTab()">
+            <i class="fa fa-plus"></i>
+        </button>
+    </div>
+
+    <!-- 加载中指示器 -->
+    <div class="loading-indicator" id="loadingIndicator">
+        <div class="spinner-border loading-spinner text-primary" role="status">
+            <span class="sr-only">加载中...</span>
+        </div>
+        <p class="mt-2">加载中...</p>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 触发类型切换
+        document.getElementById('triggerType').addEventListener('change', function() {
+            const cronConfig = document.getElementById('cronConfig');
+            const intervalConfig = document.getElementById('intervalConfig');
+            const oneTimeConfig = document.getElementById('oneTimeConfig');
+            
+            cronConfig.style.display = 'none';
+            intervalConfig.style.display = 'none';
+            oneTimeConfig.style.display = 'none';
+            
+            const selectedType = this.value;
+            if (selectedType === 'cron') {
+                cronConfig.style.display = 'block';
+            } else if (selectedType === 'interval') {
+                intervalConfig.style.display = 'block';
+            } else if (selectedType === 'one-time') {
+                oneTimeConfig.style.display = 'block';
+            }
+        });
+
+        // 任务类型切换
+        document.getElementById('taskType').addEventListener('change', function() {
+            const httpTaskConfig = document.getElementById('httpTaskConfig');
+            const sqlTaskConfig = document.getElementById('sqlTaskConfig');
+            const scriptTaskConfig = document.getElementById('scriptTaskConfig');
+            const functionTaskConfig = document.getElementById('functionTaskConfig');
+            
+            httpTaskConfig.style.display = 'none';
+            sqlTaskConfig.style.display = 'none';
+            scriptTaskConfig.style.display = 'none';
+            functionTaskConfig.style.display = 'none';
+            
+            const selectedType = this.value;
+            if (selectedType === 'http') {
+                httpTaskConfig.style.display = 'block';
+            } else if (selectedType === 'sql') {
+                sqlTaskConfig.style.display = 'block';
+            } else if (selectedType === 'script') {
+                scriptTaskConfig.style.display = 'block';
+            } else if (selectedType === 'function') {
+                functionTaskConfig.style.display = 'block';
+            }
+        });
+
+        // 告警启用切换
+        document.getElementById('enableAlert').addEventListener('change', function() {
+            const alertConfig = document.getElementById('alertConfig');
+            alertConfig.style.display = this.checked ? 'block' : 'none';
+        });
+
+        // Cron表达式预览更新
+        document.getElementById('cronExpression').addEventListener('input', function() {
+            updateCronPreview(this.value);
+        });
+
+        // 更新Cron预览
+        function updateCronPreview(cronExpression) {
+            const previewElement = document.getElementById('cronPreview');
+            // 简单的Cron表达式预览解析，实际项目中可以使用专门的解析库
+            let preview = '预览: ';
+            
+            const parts = cronExpression.trim().split(/\s+/);
+            if (parts.length === 5) {
+                const [minute, hour, day, month, weekday] = parts;
+                
+                // 简单解析示例
+                if (minute === '*') {
+                    preview += '每分钟 ';
+                } else {
+                    preview += `第${minute}分钟 `;
+                }
+                
+                if (hour === '*') {
+                    preview += '每小时 ';
+                } else {
+                    preview += `${hour}点 `;
+                }
+                
+                if (day === '*') {
+                    preview += '每天 ';
+                } else {
+                    preview += `${day}号 `;
+                }
+                
+                if (month === '*') {
+                    preview += '每月 ';
+                } else {
+                    preview += `${month}月 `;
+                }
+                
+                if (weekday === '*' || weekday === '?') {
+                    // 忽略星期
+                } else if (weekday === '1-5') {
+                    preview += '工作日';
+                } else {
+                    const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+                    if (weekday >= 0 && weekday <= 6) {
+                        preview += weekdays[weekday];
+                    } else {
+                        preview += `星期${weekday}`;
+                    }
+                }
+            } else {
+                preview += '无效的Cron表达式';
+            }
+            
+            previewElement.textContent = preview;
+        }
+
+        // 生成Cron表达式
+        function generateCronExpression() {
+            const minute = document.getElementById('cronGenMinute').value;
+            const hour = document.getElementById('cronGenHour').value;
+            const day = document.getElementById('cronGenDay').value;
+            const month = document.getElementById('cronGenMonth').value;
+            const week = document.getElementById('cronGenWeek').value;
+            
+            const cronExpression = `${minute} ${hour} ${day} ${month} ${week}`;
+            document.getElementById('generatedCron').value = cronExpression;
+        }
+
+        // 切换到创建任务选项卡
+        function switchToCreateTaskTab() {
+            const tab = document.getElementById('create-task-tab');
+            const tabInstance = new bootstrap.Tab(tab);
+            tabInstance.show();
+        }
+
+        // 预览任务
+        function previewTask() {
+            // 实际项目中这里会收集表单数据并显示预览
+            alert('任务预览功能将在实际实现中展示任务配置的完整信息');
+        }
+
+        // 表单提交处理
+        document.getElementById('createTaskForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            // 显示加载中
+            document.getElementById('loadingIndicator').style.display = 'block';
+            
+            // 模拟API调用延迟
+            setTimeout(() => {
+                // 隐藏加载中
+                document.getElementById('loadingIndicator').style.display = 'none';
+                
+                alert('任务创建成功！在实际实现中，这里会将任务提交到后端API');
+                
+                // 重置表单
+                this.reset();
+                
+                // 切换到任务列表选项卡
+                const taskListTab = document.getElementById('task-list-tab');
+                const tabInstance = new bootstrap.Tab(taskListTab);
+                tabInstance.show();
+            }, 1500);
+        });
+
+        // 初始化图表
+        function initCharts() {
+            // 执行趋势图表
+            const executionTrendCtx = document.getElementById('executionTrendChart').getContext('2d');
+            const executionTrendChart = new Chart(executionTrendCtx, {
+                type: 'line',
+                data: {
+                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+                    datasets: [{
+                        label: '任务执行次数',
+                        data: [12, 19, 30, 55, 62, 28],
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // 执行结果分布图表
+            const executionResultCtx = document.getElementById('executionResultChart').getContext('2d');
+            const executionResultChart = new Chart(executionResultCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['成功', '失败', '运行中'],
+                    datasets: [{
+                        data: [240, 2, 3],
+                        backgroundColor: [
+                            'rgba(25, 135, 84, 0.7)',
+                            'rgba(220, 53, 69, 0.7)',
+                            'rgba(13, 110, 253, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgb(25, 135, 84)',
+                            'rgb(220, 53, 69)',
+                            'rgb(13, 110, 253)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    }
+                }
+            });
+        }
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            // 更新初始的Cron预览
+            updateCronPreview(document.getElementById('cronExpression').value);
+            
+            // 初始化图表
+            if (typeof Chart !== 'undefined') {
+                initCharts();
+            }
+            
+            // 初始化时间选择器，设置默认值为当前时间后15分钟
+            const now = new Date();
+            now.setMinutes(now.getMinutes() + 15);
+            const formattedDateTime = now.toISOString().slice(0, 16);
+            document.getElementById('executeTime').value = formattedDateTime;
+            
+            // 初始化工具提示
+            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+            const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+        });
+    </script>
+</body>
+</html>
+                                           

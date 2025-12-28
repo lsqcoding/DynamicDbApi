@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DynamicDbApi - 动态JSON查询测试</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f8f9fa;
+        }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            padding: 48px 0 0;
+            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+            overflow-y: auto;
+            width: 250px;
+        }
+        .sidebar-sticky {
+            position: relative;
+            top: 0;
+            height: calc(100vh - 48px);
+            padding-top: .5rem;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+        .nav-link.active {
+            background-color: #e9ecef;
+            color: #495057;
+            font-weight: 500;
+        }
+        .card {
+            margin-bottom: 20px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .05);
+        }
+        .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+        .form-label {
+            font-weight: 500;
+        }
+        #response, #queryPreview {
+            font-family: 'Courier New', Courier, monospace;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            background-color: #f8f9fa;
+        }
+        .api-endpoint {
+            background-color: #e9ecef;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            margin-bottom: 15px;
+            word-break: break-all;
+        }
+        .method-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        .badge-get { background-color: #4caf50; color: white; }
+        .badge-post { background-color: #2196f3; color: white; }
+        .badge-put { background-color: #ff9800; color: white; }
+        .badge-delete { background-color: #f44336; color: white; }
+        .loading-indicator {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        .loading-spinner {
+            width: 3rem;
+            height: 3rem;
+        }
+        .nav-link {
+            transition: all 0.2s ease;
+        }
+        .nav-link:hover {
+            background-color: #f1f3f5;
+        }
+        .result-success {
+            border-left: 4px solid #28a745;
+        }
+        .result-error {
+            border-left: 4px solid #dc3545;
+        }
+        .tabs-nav .nav-link {
+            border: 1px solid transparent;
+            border-top-left-radius: 0.25rem;
+            border-top-right-radius: 0.25rem;
+        }
+        .tabs-nav .nav-link.active {
+            color: #495057;
+            background-color: #fff;
+            border-color: #dee2e6 #dee2e6 #fff;
+        }
+        .condition-item {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        .query-builder {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .btn-icon {
+            padding: 0.375rem 0.75rem;
+        }
+        .btn-icon i {
+            font-size: 16px;
+        }
+        .operator-select {
+            width: 120px;
+        }
+        .query-preview {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 侧边导航 -->
+    <nav class="col-md-3 col-lg-2 d-md-block sidebar bg-light">
+        <div class="sidebar-sticky">
+            <div class="p-4 border-bottom">
+                <h5 class="font-weight-bold">DynamicDbApi</h5>
+                <p class="text-sm text-muted">功能测试平台</p>
+            </div>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="index.html">
+                        <i class="fa fa-dashboard mr-2"></i>
+                        测试平台首页
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="db-connection.html">
+                        <i class="fa fa-database mr-2"></i>
+                        多数据库连接测试
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="dynamic-query.html">
+                        <i class="fa fa-search mr-2"></i>
+                        动态JSON查询测试
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="real-time-message.html">
+                        <i class="fa fa-comments mr-2"></i>
+                        实时消息系统测试
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="mail-service.html">
+                        <i class="fa fa-envelope mr-2"></i>
+                        邮件服务测试
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="scheduler.html">
+                        <i class="fa fa-clock-o mr-2"></i>
+                        定时任务系统测试
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="file-management.html">
+                        <i class="fa fa-folder mr-2"></i>
+                        文件管理功能测试
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- 主要内容区域 -->
+    <main class="main-content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="mb-4">
+                        <h1 class="h2">动态JSON查询测试</h1>
+                        <p class="text-muted">测试DynamicDbApi的动态JSON查询功能，支持灵活的条件查询、排序、分页等操作</p>
+                    </div>
+
+                    <!-- 选项卡导航 -->
+                    <div class="mb-4">
+                        <ul class="nav tabs-nav" id="queryTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="query-builder-tab" data-bs-toggle="tab" data-bs-target="#query-builder" type="button" role="tab">
+                                    <i class="fa fa-wrench mr-1"></i>
+                                    查询构建器
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="raw-query-tab" data-bs-toggle="tab" data-bs-target="#raw-query" type="button" role="tab">
+                                    <i class="fa fa-code mr-1"></i>
+                                    原始JSON查询
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="query-examples-tab" data-bs-toggle="tab" data-bs-target="#query-examples" type="button" role="tab">
+                                    <i class="fa fa-book mr-1"></i>
+                                    查询示例
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- 选项卡内容 -->
+                    <div class="tab-content" id="queryTabsContent">
+                        <!-- 查询构建器选项卡 -->
+                        <div class="tab-pane fade show active" id="query-builder" role="tabpanel">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">可视化查询构建器</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="api-endpoint">
+                                        <span class="method-badge badge-post">POST</span>
+                                        /Query/dynamic-query
+                                    </div>
+                                    
+                                    <form id="queryBuilderForm">
+                                        <div class="row mb-3">
+                                            <div class="col-md-4">
+                                                <label for="connectionId" class="form-label">数据库连接</label>
+                                                <select class="form-select" id="connectionId">
+                                                    <option value="default">默认连接</option>
+                                                    <!-- 数据库连接将通过JavaScript动态加载 -->
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="tableName" class="form-label">表名</label>
+                                                <input type="text" class="form-control" id="tableName" required placeholder="输入表名">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="alias" class="form-label">别名</label>
+                                                <input type="text" class="form-control" id="alias" placeholder="输入表别名（可选）">
+                                            </div>
+                                        </div>
+
+                                        <!-- 字段选择 -->
+                                        <div class="mb-4">
+                                            <label class="form-label">选择字段</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="fieldName" placeholder="字段名">
+                                                <input type="text" class="form-control" id="fieldAlias" placeholder="别名（可选）">
+                                                <button type="button" class="btn btn-outline-primary" onclick="addField()">
+                                                    <i class="fa fa-plus"></i>
+                                                </button>
+                                            </div>
+                                            <div id="selectedFields" class="mt-2">
+                                                <!-- 已选择的字段将动态添加到这里 -->
+                                            </div>
+                                        </div>
+
+                                        <!-- 查询条件 -->
+                                        <div class="mb-4">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <label class="form-label">查询条件</label>
+                                                <button type="button" class="btn btn-sm btn-primary" onclick="addCondition()">
+                                                    <i class="fa fa-plus"></i> 添加条件
+                                                </button>
+                                            </div>
+                                            <div id="conditionsContainer">
+                                                <!-- 条件将动态添加到这里 -->
+                                            </div>
+                                        </div>
+
+                                        <!-- 排序设置 -->
+                                        <div class="mb-4">
+                                            <label class="form-label">排序设置</label>
+                                            <div class="input-group mb-2">
+                                                <input type="text" class="form-control" id="sortField" placeholder="排序字段">
+                                                <select class="form-select" id="sortDirection" style="width: 120px;">
+                                                    <option value="asc">升序</option>
+                                                    <option value="desc">降序</option>
+                                                </select>
+                                                <button type="button" class="btn btn-outline-primary" onclick="addSort()">
+                                                    <i class="fa fa-plus"></i>
+                                                </button>
+                                            </div>
+                                            <div id="sortFields" class="mt-2">
+                                                <!-- 已添加的排序字段将动态显示 -->
+                                            </div>
+                                        </div>
+
+                                        <!-- 分页设置 -->
+                                        <div class="row mb-4">
+                                            <div class="col-md-4">
+                                                <label for="page" class="form-label">页码</label>
+                                                <input type="number" class="form-control" id="page" value="1" min="1">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="pageSize" class="form-label">每页大小</label>
+                                                <input type="number" class="form-control" id="pageSize" value="10" min="1" max="1000">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="totalCount" class="form-label">是否返回总数</label>
+                                                <div class="form-check form-check-inline mt-2">
+                                                    <input class="form-check-input" type="checkbox" id="includeTotal" checked>
+                                                    <label class="form-check-label" for="includeTotal">包含总数</label>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- 查询预览 -->
+                                        <div class="query-preview">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <h6>查询JSON预览</h6>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="copyQueryPreview()">
+                                                    <i class="fa fa-copy"></i> 复制
+                                                </button>
+                                            </div>
+                                            <pre id="queryPreview" class="p-3 border rounded"></pre>
+                                        </div>
+
+                                        <div class="mt-4">
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fa fa-search mr-1"></i>
+                                                执行查询
+                                            </button>
+                                            <button type="button" class="btn btn-secondary ms-2" onclick="resetQuery()">
+                                                <i class="fa fa-refresh mr-1"></i>
+                                                重置查询
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 原始JSON查询选项卡 -->
+                        <div class="tab-pane fade" id="raw-query" role="tabpanel">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">原始JSON查询</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="api-endpoint">
+                                        <span class="method-badge badge-post">POST</span>
+                                        /Query/dynamic-query
+                                    </div>
+                                    
+                                    <form id="rawQueryForm">
+                                        <div class="mb-3">
+                                            <label for="rawQueryJson" class="form-label">查询JSON</label>
+                                            <textarea class="form-control" id="rawQueryJson" rows="10" required>
+{
+  "connectionId": "default",
+  "table": {
+    "name": "users",
+    "alias": "u"
+  },
+  "fields": [
+    { "name": "id", "alias": "userId" },
+    { "name": "username" },
+    { "name": "email" }
+  ],
+  "conditions": [
+    {
+      "field": "age",
+      "operator": "__gte",
+      "value": 18
+    }
+  ],
+  "sort": [
+    { "field": "created_at", "direction": "desc" }
+  ],
+  "page": 1,
+  "pageSize": 10,
+  "includeTotal": true
+}</textarea>
+                                        </div>
+
+                                        <div class="mt-4">
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fa fa-search mr-1"></i>
+                                                执行查询
+                                            </button>
+                                            <button type="button" class="btn btn-secondary ms-2" onclick="formatJson()">
+                                                <i class="fa fa-indent mr-1"></i>
+                                                格式化JSON
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 查询示例选项卡 -->
+                        <div class="tab-pane fade" id="query-examples" role="tabpanel">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">查询示例</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-4">
+                                        <h6>基本查询</h6>
+                                        <pre class="p-3 bg-light border rounded">
+{
+  "table": { "name": "users" },
+  "fields": ["id", "name", "email"],
+  "page": 1,
+  "pageSize": 10
+}</pre>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <h6>条件查询</h6>
+                                        <pre class="p-3 bg-light border rounded">
+{
+  "table": { "name": "products" },
+  "conditions": [
+    { "field": "price", "operator": "__gte", "value": 100 },
+    { "field": "category", "operator": "__eq", "value": "electronics" }
+  ]
+}</pre>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <h6>排序和分页</h6>
+                                        <pre class="p-3 bg-light border rounded">
+{
+  "table": { "name": "orders" },
+  "sort": [
+    { "field": "order_date", "direction": "desc" },
+    { "field": "total_amount", "direction": "asc" }
+  ],
+  "page": 2,
+  "pageSize": 20,
+  "includeTotal": true
+}</pre>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <h6>模糊查询</h6>
+                                        <pre class="p-3 bg-light border rounded">
+{
+  "table": { "name": "users" },
+  "conditions": [
+    { "field": "name", "operator": "__like", "value": "%John%" }
+  ]
+}</pre>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <h6>IN查询</h6>
+                                        <pre class="p-3 bg-light border rounded">
+{
+  "table": { "name": "products" },
+  "conditions": [
+    { "field": "status", "operator": "__in", "value": ["active", "pending"] }
+  ]
+}</pre>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <h6>基本插入操作</h6>
+                                        <pre class="p-3 bg-light border rounded">
+{
+  "table": { "name": "users" },
+  "operation": "insert",
+  "data": {
+    "name": "测试用户",
+    "email": "test@example.com",
+    "phone": "13800138000",
+    "address": "测试地址"
+  }
+}</pre>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <h6>带自定义返回值的插入操作</h6>
+                                        <pre class="p-3 bg-light border rounded">
+{
+  "table": { "name": "users" },
+  "operation": "insert",
+  "data": {
+    "name": "自定义返回值测试用户",
+    "email": "custom-return@example.com",
+    "phone": "13800138001",
+    "address": "自定义返回值测试地址"
+  },
+  "returnType": "SingleObject",
+  "returnFields": ["id", "name", "email"]
+}</pre>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <h6>带自定义返回值的批量插入操作</h6>
+                                        <pre class="p-3 bg-light border rounded">
+{
+  "table": { "name": "users" },
+  "operation": "insert",
+  "data": [
+    {
+      "name": "批量用户1",
+      "email": "batch1@example.com",
+      "phone": "13800138002",
+      "address": "批量测试地址1"
+    },
+    {
+      "name": "批量用户2",
+      "email": "batch2@example.com",
+      "phone": "13800138003",
+      "address": "批量测试地址2"
+    }
+  ],
+  "returnType": "JsonArray",
+  "returnFields": ["id", "name"]
+}</pre>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <h6>基本CTE查询</h6>
+                                        <pre class="p-3 bg-light border rounded">
+{
+  "operation": "cte",
+  "cteQuery": {
+    "definitions": [
+      {
+        "name": "CTE_UserOrders",
+        "query": "SELECT u.id AS UserId, u.name AS UserName, COUNT(o.id) AS OrderCount FROM users u JOIN orders o ON u.id = o.user_id GROUP BY u.id, u.name"
+      }
+    ]
+  },
+  "table": { "name": "CTE_UserOrders" },
+  "fields": ["UserId", "UserName", "OrderCount"],
+  "conditions": [
+    { "field": "OrderCount", "operator": "__gte", "value": 5 }
+  ],
+  "sort": [
+    { "field": "OrderCount", "direction": "desc" }
+  ]
+}</pre>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <h6>递归CTE查询</h6>
+                                        <pre class="p-3 bg-light border rounded">
+{
+  "operation": "cte",
+  "cteQuery": {
+    "definitions": [
+      {
+        "name": "CTE_RecursiveCategory",
+        "query": "WITH RECURSIVE CTE_RecursiveCategory (id, name, parent_id, level) AS (SELECT id, name, parent_id, 0 FROM categories WHERE parent_id IS NULL UNION ALL SELECT c.id, c.name, c.parent_id, rc.level + 1 FROM categories c INNER JOIN CTE_RecursiveCategory rc ON c.parent_id = rc.id) SELECT * FROM CTE_RecursiveCategory",
+        "isRecursive": true
+      }
+    ]
+  },
+  "table": { "name": "CTE_RecursiveCategory" },
+  "fields": ["id", "name", "parent_id", "level"],
+  "sort": [
+    { "field": "level", "direction": "asc" },
+    { "field": "name", "direction": "asc" }
+  ]
+}</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 响应结果展示区域 -->
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">查询结果</h5>
+                            <div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearResponse()">
+                                    <i class="fa fa-trash-o mr-1"></i>
+                                    清空
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="copyResponse()">
+                                    <i class="fa fa-copy mr-1"></i>
+                                    复制
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="loading-indicator" id="loadingIndicator">
+                                <div class="spinner-border loading-spinner text-primary" role="status">
+                                    <span class="visually-hidden">加载中...</span>
+                                </div>
+                                <p class="mt-2">正在执行查询...</p>
+                            </div>
+                            <pre id="response" class="p-3 border rounded bg-light"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Axios for API requests -->
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.7/dist/axios.min.js"></script>
+    <script>
+        // API基础配置
+        const apiConfig = {
+            getBaseUrl: () => {
+                return localStorage.getItem('apiBaseUrl') || 'https://localhost:7042/api';
+            },
+            getAuthToken: () => {
+                return localStorage.getItem('authToken') || '';
+            },
+            getTimeout: () => {
+                return parseInt(localStorage.getItem('requestTimeout')) || 10000;
+            },
+            getIncludeCredentials: () => {
+                return localStorage.getItem('includeCredentials') === 'true';
+            }
+        };
+
+        // 条件运算符选项
+        const conditionOperators = [
+            { value: "__eq", label: "等于" },
+            { value: "__ne", label: "不等于" },
+            { value: "__gt", label: "大于" },
+            { value: "__gte", label: "大于等于" },
+            { value: "__lt", label: "小于" },
+            { value: "__lte", label: "小于等于" },
+            { value: "__like", label: "包含" },
+            { value: "__notLike", label: "不包含" },
+            { value: "__in", label: "在范围内" },
+            { value: "__notIn", label: "不在范围内" },
+            { value: "__isNull", label: "为空" },
+            { value: "__isNotNull", label: "不为空" }
+        ];
+
+        // 存储查询条件
+        let conditions = [];
+        // 存储选择的字段
+        let selectedFields = [];
+        // 存储排序字段
+        let sortFields = [];
+
+        // 显示加载指示器
+        function showLoading() {
+            document.getElementById('loadingIndicator').style.display = 'block';
+            document.getElementById('response').style.display = 'none';
+        }
+
+        // 隐藏加载指示器
+        function hideLoading() {
+            document.getElementById('loadingIndicator').style.display = 'none';
+            document.getElementById('response').style.display = 'block';
+        }
+
+        // 显示API响应结果
+        function displayResponse(response, isError = false) {
+            hideLoading();
+            const responseElement = document.getElementById('response');
+            
+            let displayContent = '';
+            
+            if (isError) {
+                responseElement.className = 'p-3 border rounded bg-light result-error';
+                if (response.response) {
+                    displayContent = `错误: ${response.message}\n\n`;
+                    displayContent += `状态码: ${response.response.status}\n\n`;
+                    displayContent += `响应数据: ${JSON.stringify(response.response.data, null, 2)}`;
+                } else {
+                    displayContent = `请求失败: ${response.message}`;
+                }
+            } else {
+                responseElement.className = 'p-3 border rounded bg-light result-success';
+                displayContent = `状态码: ${response.status}\n\n`;
+                displayContent += `响应数据: ${JSON.stringify(response.data, null, 2)}`;
+            }
+            
+            responseElement.textContent = displayContent;
+        }
+
+        // 清空响应结果
+        function clearResponse() {
+            document.getElementById('response').textContent = '';
+            document.getElementById('response').className = 'p-3 border rounded bg-light';
+        }
+
+        // 复制响应结果到剪贴板
+        function copyResponse() {
+            const responseText = document.getElementById('response').textContent;
+            if (responseText) {
+                navigator.clipboard.writeText(responseText)
+                    .then(() => {
+                        alert('响应内容已复制到剪贴板');
+                    })
+                    .catch(err => {
+                        console.error('复制失败:', err);
+                    });
+            }
+        }
+
+        // 复制查询预览
+        function copyQueryPreview() {
+            const queryPreview = document.getElementById('queryPreview').textContent;
+            if (queryPreview) {
+                navigator.clipboard.writeText(queryPreview)
+                    .then(() => {
+                        alert('查询JSON已复制到剪贴板');
+                    })
+                    .catch(err => {
+                        console.error('复制失败:', err);
+                    });
+            }
+        }
+
+        // 通用API请求函数
+        async function makeApiRequest(endpoint, method = 'GET', data = null, params = null) {
+            showLoading();
+            const url = `${apiConfig.getBaseUrl()}${endpoint}`;
+            
+            try {
+                const config = {
+                    method,
+                    url,
+                    timeout: apiConfig.getTimeout(),
+                    withCredentials: apiConfig.getIncludeCredentials()
+                };
+                
+                const token = apiConfig.getAuthToken();
+                if (token) {
+                    config.headers = {
+                        Authorization: token
+                    };
+                }
+                
+                if (data) {
+                    config.data = data;
+                }
+                
+                if (params) {
+                    config.params = params;
+                }
+                
+                const response = await axios(config);
+                displayResponse(response);
+                return response;
+            } catch (error) {
+                displayResponse(error, true);
+                throw error;
+            }
+        }
+
+        // 添加查询条件
+        function addCondition() {
+            const conditionId = Date.now();
+            const condition = { id: conditionId, field: '', operator: '__eq', value: '' };
+            conditions.push(condition);
+            renderConditions();
+        }
+
+        // 渲染查询条件
+        function renderConditions() {
+            const container = document.getElementById('conditionsContainer');
+            container.innerHTML = '';
+            
+            if (conditions.length === 0) {
+                container.innerHTML = '<p class="text-muted">暂无查询条件，点击添加条件按钮添加</p>';
+                return;
+            }
+            
+            conditions.forEach(condition => {
+                const conditionElement = document.createElement('div');
+                conditionElement.className = 'condition-item';
+                conditionElement.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <input type="text" class="form-control me-2" placeholder="字段名" 
+                               value="${condition.field}" 
+                               oninput="updateConditionField(${condition.id}, 'field', this.value)">
+                        <select class="form-select operator-select me-2" 
+                                onchange="updateConditionField(${condition.id}, 'operator', this.value)">
+                            ${conditionOperators.map(op => 
+                                `<option value="${op.value}" ${condition.operator === op.value ? 'selected' : ''}>${op.label}</option>`
+                            ).join('')}
+                        </select>
+                        <input type="text" class="form-control me-2" placeholder="值" 
+                               value="${condition.value}" 
+                               oninput="updateConditionField(${condition.id}, 'value', this.value)">
+                        <button type="button" class="btn btn-sm btn-danger" 
+                                onclick="removeCondition(${condition.id})">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(conditionElement);
+            });
+            
+            updateQueryPreview();
+        }
+
+        // 更新条件字段
+        function updateConditionField(conditionId, fieldName, value) {
+            const condition = conditions.find(c => c.id === conditionId);
+            if (condition) {
+                condition[fieldName] = value;
+                updateQueryPreview();
+            }
+        }
+
+        // 移除条件
+        function removeCondition(conditionId) {
+            conditions = conditions.filter(c => c.id !== conditionId);
+            renderConditions();
+        }
+
+        // 添加字段
+        function addField() {
+            const fieldName = document.getElementById('fieldName').value.trim();
+            const fieldAlias = document.getElementById('fieldAlias').value.trim();
+            
+            if (!fieldName) {
+                alert('请输入字段名');
+                return;
+            }
+            
+            selectedFields.push({ name: fieldName, alias: fieldAlias });
+            document.getElementById('fieldName').value = '';
+            document.getElementById('fieldAlias').value = '';
+            
+            renderSelectedFields();
+        }
+
+        // 渲染已选择的字段
+        function renderSelectedFields() {
+            const container = document.getElementById('selectedFields');
+            container.innerHTML = '';
+            
+            selectedFields.forEach((field, index) => {
+                const fieldElement = document.createElement('div');
+                fieldElement.className = 'd-inline-block bg-light border rounded px-3 py-1 m-1';
+                fieldElement.innerHTML = `
+                    ${field.name}${field.alias ? ` as ${field.alias}` : ''}
+                    <button type="button" class="btn btn-sm btn-outline-danger ml-2" 
+                            onclick="removeField(${index})">
+                        <i class="fa fa-times"></i>
+                    </button>
+                `;
+                container.appendChild(fieldElement);
+            });
+            
+            updateQueryPreview();
+        }
+
+        // 移除字段
+        function removeField(index) {
+            selectedFields.splice(index, 1);
+            renderSelectedFields();
+        }
+
+        // 添加排序
+        function addSort() {
+            const field = document.getElementById('sortField').value.trim();
+            const direction = document.getElementById('sortDirection').value;
+            
+            if (!field) {
+                alert('请输入排序字段');
+                return;
+            }
+            
+            sortFields.push({ field, direction });
+            document.getElementById('sortField').value = '';
+            
+            renderSortFields();
+        }
+
+        // 渲染排序字段
+        function renderSortFields() {
+            const container = document.getElementById('sortFields');
+            container.innerHTML = '';
+            
+            sortFields.forEach((sort, index) => {
+                const sortElement = document.createElement('div');
+                sortElement.className = 'd-inline-block bg-light border rounded px-3 py-1 m-1';
+                sortElement.innerHTML = `
+                    ${sort.field} ${sort.direction === 'asc' ? '<i class="fa fa-sort-amount-asc"></i>' : '<i class="fa fa-sort-amount-desc"></i>'}
+                    <button type="button" class="btn btn-sm btn-outline-danger ml-2" 
+                            onclick="removeSort(${index})">
+                        <i class="fa fa-times"></i>
+                    </button>
+                `;
+                container.appendChild(sortElement);
+            });
+            
+            updateQueryPreview();
+        }
+
+        // 移除排序字段
+        function removeSort(index) {
+            sortFields.splice(index, 1);
+            renderSortFields();
+        }
+
+        // 更新查询预览
+        function updateQueryPreview() {
+            const query = buildQuery();
+            document.getElementById('queryPreview').textContent = JSON.stringify(query, null, 2);
+        }
+
+        // 构建查询对象
+        function buildQuery() {
+            const query = {
+                connectionId: document.getElementById('connectionId').value || 'default',
+                table: {
+                    name: document.getElementById('tableName').value.trim(),
+                    alias: document.getElementById('alias').value.trim() || undefined
+                },
+                page: parseInt(document.getElementById('page').value) || 1,
+                pageSize: parseInt(document.getElementById('pageSize').value) || 10,
+                includeTotal: document.getElementById('includeTotal').checked
+            };
+            
+            // 添加字段
+            if (selectedFields.length > 0) {
+                query.fields = selectedFields.filter(f => f.name).map(f => {
+                    if (f.alias) {
+                        return { name: f.name, alias: f.alias };
+                    }
+                    return { name: f.name };
+                });
+            }
+            
+            // 添加条件
+            const validConditions = conditions.filter(c => c.field && c.operator);
+            if (validConditions.length > 0) {
+                query.conditions = validConditions.map(c => ({
+                    field: c.field,
+                    operator: c.operator,
+                    value: c.value || undefined
+                }));
+            }
+            
+            // 添加排序
+            if (sortFields.length > 0) {
+                query.sort = sortFields.filter(s => s.field).map(s => ({
+                    field: s.field,
+                    direction: s.direction
+                }));
+            }
+            
+            return query;
+        }
+
+        // 重置查询
+        function resetQuery() {
+            document.getElementById('connectionId').value = 'default';
+            document.getElementById('tableName').value = '';
+            document.getElementById('alias').value = '';
+            document.getElementById('page').value = 1;
+            document.getElementById('pageSize').value = 10;
+            document.getElementById('includeTotal').checked = true;
+            
+            // 清空数组
+            conditions = [];
+            selectedFields = [];
+            sortFields = [];
+            
+            // 重新渲染UI
+            renderConditions();
+            renderSelectedFields();
+            renderSortFields();
+            updateQueryPreview();
+        }
+
+        // 格式化JSON
+        function formatJson() {
+            const jsonText = document.getElementById('rawQueryJson').value;
+            try {
+                const parsed = JSON.parse(jsonText);
+                document.getElementById('rawQueryJson').value = JSON.stringify(parsed, null, 2);
+            } catch (error) {
+                alert('JSON格式无效');
+            }
+        }
+
+        // 查询构建器表单提交
+        document.getElementById('queryBuilderForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const tableName = document.getElementById('tableName').value.trim();
+            if (!tableName) {
+                alert('请输入表名');
+                return;
+            }
+            
+            const query = buildQuery();
+            
+            try {
+                await makeApiRequest('/Query/dynamic-query', 'POST', query);
+            } catch (error) {
+                console.error('查询失败:', error);
+            }
+        });
+
+        // 原始查询表单提交
+        document.getElementById('rawQueryForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            try {
+                const queryJson = JSON.parse(document.getElementById('rawQueryJson').value);
+                await makeApiRequest('/Query/dynamic-query', 'POST', queryJson);
+            } catch (error) {
+                if (error instanceof SyntaxError) {
+                    alert('JSON格式无效');
+                } else {
+                    console.error('查询失败:', error);
+                }
+            }
+        });
+
+        // 页面初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化条件、字段和排序
+            renderConditions();
+            renderSelectedFields();
+            renderSortFields();
+            updateQueryPreview();
+        });
+    </script>
+</body>
+</html>

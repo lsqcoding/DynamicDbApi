@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>动态数据库API系统</title>
+    <!-- Material UI CSS -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mui/material@5.14.0/dist/mui.min.css" />
+    <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+    <div id="app">
+        <div class="login-container" id="login-container">
+            <div class="login-card">
+                <div class="login-header">
+                    <h1>动态数据库API系统</h1>
+                    <p>无需编写后端代码，通过JSON实现数据库操作</p>
+                </div>
+                <div class="login-form">
+                    <div class="form-group">
+                        <label for="username">用户名</label>
+                        <input type="text" id="username" placeholder="请输入用户名" />
+                    </div>
+                    <div class="form-group">
+                        <label for="password">密码</label>
+                        <input type="password" id="password" placeholder="请输入密码" />
+                    </div>
+                    <div class="form-group">
+                        <button id="login-btn" class="btn btn-primary">登录</button>
+                    </div>
+                    <div id="login-error" class="error-message"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="app-container" id="app-container" style="display: none;">
+            <header class="app-header">
+                <div class="header-left">
+                    <button id="menu-toggle" class="menu-toggle">
+                        <span class="material-icons">menu</span>
+                    </button>
+                    <h1>动态数据库API系统</h1>
+                </div>
+                <div class="header-right">
+                    <span id="current-user"></span>
+                    <button id="logout-btn" class="btn btn-text">
+                        <span class="material-icons">logout</span>
+                        退出
+                    </button>
+                </div>
+            </header>
+
+            <div class="app-content">
+                <aside class="app-sidebar" id="app-sidebar">
+                    <nav class="sidebar-nav">
+                        <ul>
+                            <li data-page="api-test" class="active">
+                                <span class="material-icons">code</span>
+                                API测试
+                            </li>
+                            <li data-page="db-connection">
+                                <span class="material-icons">storage</span>
+                                数据库连接
+                            </li>
+                            <li data-page="permission">
+                                <span class="material-icons">security</span>
+                                权限配置
+                            </li>
+                            <li data-page="settings">
+                                <span class="material-icons">settings</span>
+                                系统设置
+                            </li>
+                        </ul>
+                    </nav>
+                </aside>
+
+                <main class="app-main">
+                    <div class="page" id="api-test-page">
+                        <h2>API测试</h2>
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>动态查询测试</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label for="database-select">选择数据库</label>
+                                    <select id="database-select">
+                                        <option value="">-- 请选择数据库 --</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="operation-select">操作类型</label>
+                                    <select id="operation-select">
+                                        <option value="select">查询(SELECT)</option>
+                                        <option value="insert">插入(INSERT)</option>
+                                        <option value="update">更新(UPDATE)</option>
+                                        <option value="delete">删除(DELETE)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="table-select">选择表</label>
+                                    <select id="table-select">
+                                        <option value="">-- 请先选择数据库 --</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="query-editor">JSON请求</label>
+                                    <div id="query-editor" class="code-editor"></div>
+                                </div>
+                                <div class="form-actions">
+                                    <button id="execute-btn" class="btn btn-primary">执行</button>
+                                    <button id="clear-btn" class="btn btn-secondary">清除</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>响应结果</h3>
+                            </div>
+                            <div class="card-body">
+                                <div id="result-editor" class="code-editor"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="page" id="db-connection-page" style="display: none;">
+                        <h2>数据库连接管理</h2>
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>数据库连接列表</h3>
+                                <button id="add-connection-btn" class="btn btn-primary">添加连接</button>
+                            </div>
+                            <div class="card-body">
+                                <table id="connection-table" class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>名称</th>
+                                            <th>类型</th>
+                                            <th>是否默认</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- 数据库连接列表 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div id="connection-dialog" class="dialog" style="display: none;">
+                            <div class="dialog-content">
+                                <div class="dialog-header">
+                                    <h3 id="connection-dialog-title">添加数据库连接</h3>
+                                    <button class="dialog-close">&times;</button>
+                                </div>
+                                <div class="dialog-body">
+                                    <div class="form-group">
+                                        <label for="connection-id">连接ID</label>
+                                        <input type="text" id="connection-id" placeholder="请输入连接ID" />
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="connection-name">连接名称</label>
+                                        <input type="text" id="connection-name" placeholder="请输入连接名称" />
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="connection-type">数据库类型</label>
+                                        <select id="connection-type">
+                                            <option value="SqlServer">SQL Server</option>
+                                            <option value="MySql">MySQL</option>
+                                            <option value="Oracle">Oracle</option>
+                                            <option value="PostgreSQL">PostgreSQL</option>
+                                            <option value="Sqlite">SQLite</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="connection-string">连接字符串</label>
+                                        <input type="text" id="connection-string" placeholder="请输入连接字符串" />
+                                    </div>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="connection-default" />
+                                            设为默认连接
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="dialog-footer">
+                                    <button id="test-connection-btn" class="btn btn-secondary">测试连接</button>
+                                    <button id="save-connection-btn" class="btn btn-primary">保存</button>
+                                    <button class="btn btn-text dialog-cancel">取消</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="page" id="permission-page" style="display: none;">
+                        <h2>权限配置</h2>
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>角色权限管理</h3>
+                            </div>
+                            <div class="card-body">
+                                <p>此功能正在开发中...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="page" id="settings-page" style="display: none;">
+                        <h2>系统设置</h2>
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>CORS配置</h3>
+                            </div>
+                            <div class="card-body">
+                                <p>此功能正在开发中...</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>IP白名单</h3>
+                            </div>
+                            <div class="card-body">
+                                <p>此功能正在开发中...</p>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.40.0/min/vs/loader.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

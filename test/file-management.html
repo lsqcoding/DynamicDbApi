@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件管理功能测试 - DynamicDbApi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --secondary-color: #6c757d;
+            --success-color: #198754;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #0dcaf0;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --sidebar-width: 250px;
+            --header-height: 60px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f8f9fa;
+            color: #212529;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 侧边栏样式 */
+        .sidebar {
+            width: var(--sidebar-width);
+            position: fixed;
+            top: var(--header-height);
+            bottom: 0;
+            left: 0;
+            background-color: #212529;
+            color: #fff;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 1rem;
+            border-bottom: 1px solid #333;
+        }
+
+        .sidebar-menu {
+            padding: 0;
+            margin: 0;
+            list-style: none;
+        }
+
+        .sidebar-menu li {
+            border-bottom: 1px solid #333;
+        }
+
+        .sidebar-menu a {
+            display: block;
+            padding: 0.75rem 1rem;
+            color: #adb5bd;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .sidebar-menu a:hover {
+            background-color: #343a40;
+            color: #fff;
+        }
+
+        .sidebar-menu a.active {
+            background-color: var(--primary-color);
+            color: #fff;
+        }
+
+        .sidebar-menu a .icon {
+            margin-right: 0.75rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* 顶部导航样式 */
+        .header {
+            height: var(--header-height);
+            background-color: #fff;
+            border-bottom: 1px solid #dee2e6;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            padding: 0 1rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-brand {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-right: 2rem;
+        }
+
+        .header-search {
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .header-search .form-control {
+            border-radius: 20px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        /* 主内容样式 */
+        .main-content {
+            margin-top: var(--header-height);
+            margin-left: var(--sidebar-width);
+            padding: 2rem;
+            flex: 1;
+        }
+
+        /* 卡片样式 */
+        .card {
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            font-weight: 600;
+        }
+
+        /* 文件上传区域样式 */
+        .upload-area {
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background-color: #f8f9fa;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary-color);
+            background-color: #e7f1ff;
+        }
+
+        .upload-area .upload-icon {
+            font-size: 3rem;
+            color: #adb5bd;
+            margin-bottom: 1rem;
+        }
+
+        /* 文件列表样式 */
+        .file-list {
+            margin-top: 1.5rem;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            background-color: #fff;
+            transition: all 0.3s;
+        }
+
+        .file-item:hover {
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary-color);
+        }
+
+        .file-icon {
+            font-size: 2rem;
+            margin-right: 1rem;
+            color: var(--secondary-color);
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .file-meta {
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .file-actions button {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        /* 预览模态框样式 */
+        .preview-modal .modal-content {
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .preview-content {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 70vh;
+            margin: 0 auto;
+            display: block;
+        }
+
+        .preview-text {
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        /* 文件夹视图样式 */
+        .folder-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .folder-item,
+        .grid-file-item {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+            background-color: #fff;
+        }
+
+        .folder-item:hover,
+        .grid-file-item:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .folder-icon {
+            font-size: 3rem;
+            color: #ffc107;
+            margin-bottom: 0.5rem;
+        }
+
+        .grid-file-icon {
+            font-size: 2.5rem;
+            color: var(--secondary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .item-name {
+            font-size: 0.875rem;
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* 工具按钮样式 */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding: 0.75rem 1rem;
+            background-color: #fff;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        .view-toggle {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .view-toggle button {
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+
+        .view-toggle button.active {
+            background-color: var(--primary-color);
+            color: #fff;
+            border-color: var(--primary-color);
+        }
+
+        /* 进度条样式 */
+        .progress {
+            height: 6px;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        .progress-bar {
+            height: 100%;
+            transition: width 0.3s;
+        }
+
+        /* 加载指示器样式 */
+        .loading-indicator {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+            z-index: 9999;
+            text-align: center;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+        }
+
+        /* 响应式样式 */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+        }
+
+        /* 成功和错误提示样式 */
+        .alert {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 9999;
+            max-width: 350px;
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* 表格样式 */
+        .table-responsive {
+            margin-top: 1.5rem;
+        }
+
+        .table {
+            background-color: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+
+        /* 分页样式 */
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <header class="header">
+        <button class="btn btn-outline-secondary me-2" id="sidebarToggle">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="header-brand">
+            DynamicDbApi
+        </div>
+        <div class="header-search">
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="搜索...">
+                <button class="btn btn-outline-secondary" type="button">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-outline-secondary" title="通知">
+                <i class="fas fa-bell"></i>
+            </button>
+            <button class="btn btn-outline-secondary" title="帮助">
+                <i class="fas fa-question-circle"></i>
+            </button>
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
+                    <i class="fas fa-user"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#">个人资料</a></li>
+                    <li><a class="dropdown-item" href="#">设置</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#">退出登录</a></li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <!-- 侧边栏导航 -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h4>测试工具</h4>
+        </div>
+        <ul class="sidebar-menu">
+            <li>
+                <a href="index.html">
+                    <span class="icon"><i class="fas fa-home"></i></span>
+                    <span>首页</span>
+                </a>
+            </li>
+            <li>
+                <a href="db-connection.html">
+                    <span class="icon"><i class="fas fa-database"></i></span>
+                    <span>数据库连接</span>
+                </a>
+            </li>
+            <li>
+                <a href="dynamic-query.html">
+                    <span class="icon"><i class="fas fa-search"></i></span>
+                    <span>动态查询</span>
+                </a>
+            </li>
+            <li>
+                <a href="real-time-message.html">
+                    <span class="icon"><i class="fas fa-comment-dots"></i></span>
+                    <span>实时消息</span>
+                </a>
+            </li>
+            <li>
+                <a href="mail-service.html">
+                    <span class="icon"><i class="fas fa-envelope"></i></span>
+                    <span>邮件服务</span>
+                </a>
+            </li>
+            <li>
+                <a href="scheduler.html">
+                    <span class="icon"><i class="fas fa-calendar-alt"></i></span>
+                    <span>定时任务</span>
+                </a>
+            </li>
+            <li>
+                <a href="file-management.html" class="active">
+                    <span class="icon"><i class="fas fa-folder"></i></span>
+                    <span>文件管理</span>
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <h2>文件管理功能测试</h2>
+                    <p class="text-muted mb-4">测试文件上传、下载、预览和管理功能</p>
+                </div>
+            </div>
+
+            <!-- 文件上传区域 -->
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title">上传文件</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-4">
+                                <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileUpload').click()">
+                                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                                    <h5>拖放文件到此处或点击上传</h5>
+                                    <p class="text-muted">支持多种文件格式，最大文件大小 100MB</p>
+                                    <input type="file" id="fileUpload" multiple style="display: none;">
+                                </div>
+                                <div class="progress" id="uploadProgress" style="display: none;">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label class="form-label">目标文件夹</label>
+                                        <select class="form-select" id="targetFolder">
+                                            <option value="/">根目录</option>
+                                            <option value="/images">图片</option>
+                                            <option value="/documents">文档</option>
+                                            <option value="/videos">视频</option>
+                                            <option value="/audio">音频</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">存储策略</label>
+                                        <select class="form-select" id="storagePolicy">
+                                            <option value="local">本地存储</option>
+                                            <option value="s3">Amazon S3</option>
+                                            <option value="oss">阿里云OSS</option>
+                                            <option value="cos">腾讯云COS</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="enableCompression">
+                                    <label class="form-check-label" for="enableCompression">启用压缩</label>
+                                </div>
+                                <div class="form-check form-switch mt-2">
+                                    <input class="form-check-input" type="checkbox" id="enableEncryption">
+                                    <label class="form-check-label" for="enableEncryption">启用加密</label>
+                                </div>
+                                <div class="form-check form-switch mt-2">
+                                    <input class="form-check-input" type="checkbox" id="generateThumbnail">
+                                    <label class="form-check-label" for="generateThumbnail">生成缩略图（图片文件）</label>
+                                </div>
+                            </div>
+                            
+                            <button class="btn btn-primary" id="uploadBtn">
+                                <i class="fas fa-upload mr-2"></i>上传选中的文件
+                            </button>
+                            <button class="btn btn-outline-secondary ms-2" id="clearBtn">
+                                <i class="fas fa-times mr-2"></i>清除
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title">文件上传历史</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="upload-history" id="uploadHistory">
+                                <!-- 上传历史记录将在这里动态显示 -->
+                                <div class="empty-state text-center py-4">
+                                    <i class="fas fa-history text-muted" style="font-size: 2rem;"></i>
+                                    <p class="mt-2 text-muted">暂无上传记录</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 当前目录信息 -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="toolbar">
+                        <div class="breadcrumb">
+                            <nav aria-label="breadcrumb">
+                                <ol class="breadcrumb mb-0">
+                                    <li class="breadcrumb-item"><a href="#" onclick="navigateToFolder('/')">根目录</a></li>
+                                    <li class="breadcrumb-item active" aria-current="page">当前目录</li>
+                                </ol>
+                            </nav>
+                        </div>
+                        
+                        <div class="view-toggle">
+                            <button class="btn btn-outline-secondary active" id="listViewBtn" title="列表视图">
+                                <i class="fas fa-list"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary" id="gridViewBtn" title="网格视图">
+                                <i class="fas fa-th-large"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary ml-2" id="refreshBtn" title="刷新">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 文件列表 - 列表视图 -->
+            <div class="row" id="listView">
+                <div class="col-12">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th scope="col">名称</th>
+                                    <th scope="col">类型</th>
+                                    <th scope="col">大小</th>
+                                    <th scope="col">修改日期</th>
+                                    <th scope="col">存储位置</th>
+                                    <th scope="col">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- 文件夹 -->
+                                <tr class="folder-row">
+                                    <td>
+                                        <i class="fas fa-folder text-warning mr-2"></i>
+                                        <a href="#" onclick="navigateToFolder('/images')">images</a>
+                                    </td>
+                                    <td>文件夹</td>
+                                    <td>-</td>
+                                    <td>2024-01-15 10:30</td>
+                                    <td>本地</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="renameFolder('/images')">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteFolder('/images')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="folder-row">
+                                    <td>
+                                        <i class="fas fa-folder text-warning mr-2"></i>
+                                        <a href="#" onclick="navigateToFolder('/documents')">documents</a>
+                                    </td>
+                                    <td>文件夹</td>
+                                    <td>-</td>
+                                    <td>2024-01-14 16:45</td>
+                                    <td>本地</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="renameFolder('/documents')">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteFolder('/documents')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <!-- 文件 -->
+                                <tr class="file-row">
+                                    <td>
+                                        <i class="fas fa-file-pdf text-danger mr-2"></i>
+                                        <a href="#" onclick="previewFile('annual-report.pdf')">annual-report.pdf</a>
+                                    </td>
+                                    <td>PDF文档</td>
+                                    <td>2.5 MB</td>
+                                    <td>2024-01-15 09:20</td>
+                                    <td>本地</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="downloadFile('annual-report.pdf')">
+                                                <i class="fas fa-download"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="renameFile('annual-report.pdf')">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="copyFileLink('annual-report.pdf')">
+                                                <i class="fas fa-link"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteFile('annual-report.pdf')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="file-row">
+                                    <td>
+                                        <i class="fas fa-file-excel text-success mr-2"></i>
+                                        <a href="#" onclick="previewFile('sales-data.xlsx')">sales-data.xlsx</a>
+                                    </td>
+                                    <td>Excel表格</td>
+                                    <td>1.8 MB</td>
+                                    <td>2024-01-14 14:30</td>
+                                    <td>本地</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="downloadFile('sales-data.xlsx')">
+                                                <i class="fas fa-download"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="renameFile('sales-data.xlsx')">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="copyFileLink('sales-data.xlsx')">
+                                                <i class="fas fa-link"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteFile('sales-data.xlsx')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="file-row">
+                                    <td>
+                                        <i class="fas fa-file-image text-info mr-2"></i>
+                                        <a href="#" onclick="previewFile('company-logo.png')">company-logo.png</a>
+                                    </td>
+                                    <td>PNG图片</td>
+                                    <td>350 KB</td>
+                                    <td>2024-01-13 11:15</td>
+                                    <td>本地</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="downloadFile('company-logo.png')">
+                                                <i class="fas fa-download"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="renameFile('company-logo.png')">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="copyFileLink('company-logo.png')">
+                                                <i class="fas fa-link"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteFile('company-logo.png')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="file-row">
+                                    <td>
+                                        <i class="fas fa-file-word text-primary mr-2"></i>
+                                        <a href="#" onclick="previewFile('project-proposal.docx')">project-proposal.docx</a>
+                                    </td>
+                                    <td>Word文档</td>
+                                    <td>950 KB</td>
+                                    <td>2024-01-12 15:45</td>
+                                    <td>本地</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="downloadFile('project-proposal.docx')">
+                                                <i class="fas fa-download"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="renameFile('project-proposal.docx')">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="copyFileLink('project-proposal.docx')">
+                                                <i class="fas fa-link"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteFile('project-proposal.docx')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- 分页 -->
+                    <div class="pagination-container">
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination">
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                                <li class="page-item">
+                                    <a class="page-link" href="#" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 文件列表 - 网格视图 (默认隐藏) -->
+            <div class="row" id="gridView" style="display: none;">
+                <div class="col-12">
+                    <div class="folder-grid">
+                        <!-- 文件夹 -->
+                        <div class="folder-item" onclick="navigateToFolder('/images')">
+                            <i class="fas fa-folder folder-icon"></i>
+                            <div class="item-name">images</div>
+                            <div class="text-xs text-muted">2024-01-15</div>
+                        </div>
+                        <div class="folder-item" onclick="navigateToFolder('/documents')">
+                            <i class="fas fa-folder folder-icon"></i>
+                            <div class="item-name">documents</div>
+                            <div class="text-xs text-muted">2024-01-14</div>
+                        </div>
+                        <!-- 文件 -->
+                        <div class="grid-file-item" onclick="previewFile('annual-report.pdf')">
+                            <i class="fas fa-file-pdf grid-file-icon text-danger"></i>
+                            <div class="item-name">annual-report.pdf</div>
+                            <div class="text-xs text-muted">2.5 MB</div>
+                        </div>
+                        <div class="grid-file-item" onclick="previewFile('sales-data.xlsx')">
+                            <i class="fas fa-file-excel grid-file-icon text-success"></i>
+                            <div class="item-name">sales-data.xlsx</div>
+                            <div class="text-xs text-muted">1.8 MB</div>
+                        </div>
+                        <div class="grid-file-item" onclick="previewFile('company-logo.png')">
+                            <i class="fas fa-file-image grid-file-icon text-info"></i>
+                            <div class="item-name">company-logo.png</div>
+                            <div class="text-xs text-muted">350 KB</div>
+                        </div>
+                        <div class="grid-file-item" onclick="previewFile('project-proposal.docx')">
+                            <i class="fas fa-file-word grid-file-icon text-primary"></i>
+                            <div class="item-name">project-proposal.docx</div>
+                            <div class="text-xs text-muted">950 KB</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 文件预览模态框 -->
+    <div class="modal fade" id="filePreviewModal" tabindex="-1" aria-labelledby="filePreviewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg preview-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="filePreviewModalLabel">文件预览</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="preview-content" id="previewContent">
+                        <!-- 文件预览内容将在这里动态显示 -->
+                        <div class="text-center py-4">
+                            <i class="fas fa-spinner fa-spin text-muted" style="font-size: 3rem;"></i>
+                            <p class="mt-2 text-muted">加载中...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" id="downloadPreviewBtn">
+                        <i class="fas fa-download mr-2"></i>下载文件
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 创建文件夹模态框 -->
+    <div class="modal fade" id="createFolderModal" tabindex="-1" aria-labelledby="createFolderModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createFolderModalLabel">创建新文件夹</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="newFolderName" class="form-label">文件夹名称</label>
+                        <input type="text" class="form-control" id="newFolderName" placeholder="输入文件夹名称">
+                    </div>
+                    <div class="mb-3">
+                        <label for="newFolderParent" class="form-label">父文件夹</label>
+                        <select class="form-select" id="newFolderParent">
+                            <option value="/">根目录</option>
+                            <option value="/images">images</option>
+                            <option value="/documents">documents</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="confirmCreateFolderBtn">创建</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载指示器 -->
+    <div class="loading-indicator" id="loadingIndicator">
+        <div class="spinner-border loading-spinner text-primary" role="status">
+            <span class="sr-only">加载中...</span>
+        </div>
+        <p class="mt-2">加载中...</p>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 全局变量
+        let currentFile = null;
+        let selectedFiles = [];
+        let currentFolder = '/';
+        
+        // DOM加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化文件上传
+            initFileUpload();
+            
+            // 初始化视图切换
+            initViewToggle();
+            
+            // 初始化拖拽上传
+            initDragAndDrop();
+            
+            // 初始化按钮事件
+            initButtonEvents();
+            
+            // 初始化侧边栏切换
+            initSidebarToggle();
+        });
+        
+        // 初始化侧边栏切换
+        function initSidebarToggle() {
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.querySelector('.sidebar');
+            
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('active');
+            });
+        }
+        
+        // 初始化文件上传
+        function initFileUpload() {
+            const fileUpload = document.getElementById('fileUpload');
+            const uploadHistory = document.getElementById('uploadHistory');
+            
+            fileUpload.addEventListener('change', function() {
+                selectedFiles = Array.from(this.files);
+                updateUploadHistory();
+            });
+        }
+        
+        // 更新上传历史
+        function updateUploadHistory() {
+            const uploadHistory = document.getElementById('uploadHistory');
+            
+            if (selectedFiles.length === 0) {
+                uploadHistory.innerHTML = `
+                    <div class="empty-state text-center py-4">
+                        <i class="fas fa-history text-muted" style="font-size: 2rem;"></i>
+                        <p class="mt-2 text-muted">暂无上传记录</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '<ul class="list-group">';
+            selectedFiles.forEach(file => {
+                html += `
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-file mr-2"></i>
+                            <span>${file.name}</span>
+                            <span class="text-xs text-muted ml-2">(${formatFileSize(file.size)})</span>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger" onclick="removeFileFromUploadList('${file.name}')">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </li>
+                `;
+            });
+            html += '</ul>';
+            
+            uploadHistory.innerHTML = html;
+        }
+        
+        // 移除文件
+        function removeFileFromUploadList(fileName) {
+            selectedFiles = selectedFiles.filter(file => file.name !== fileName);
+            updateUploadHistory();
+        }
+        
+        // 初始化视图切换
+        function initViewToggle() {
+            const listViewBtn = document.getElementById('listViewBtn');
+            const gridViewBtn = document.getElementById('gridViewBtn');
+            const listView = document.getElementById('listView');
+            const gridView = document.getElementById('gridView');
+            
+            listViewBtn.addEventListener('click', function() {
+                listView.style.display = 'block';
+                gridView.style.display = 'none';
+                listViewBtn.classList.add('active');
+                gridViewBtn.classList.remove('active');
+            });
+            
+            gridViewBtn.addEventListener('click', function() {
+                listView.style.display = 'none';
+                gridView.style.display = 'block';
+                gridViewBtn.classList.add('active');
+                listViewBtn.classList.remove('active');
+            });
+        }
+        
+        // 初始化拖拽上传
+        function initDragAndDrop() {
+            const uploadArea = document.getElementById('uploadArea');
+            
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadArea.classList.add('border-primary', 'bg-primary/10');
+            });
+            
+            uploadArea.addEventListener('dragleave', function() {
+                uploadArea.classList.remove('border-primary', 'bg-primary/10');
+            });
+            
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadArea.classList.remove('border-primary', 'bg-primary/10');
+                
+                if (e.dataTransfer.files.length > 0) {
+                    selectedFiles = Array.from(e.dataTransfer.files);
+                    updateUploadHistory();
+                    showNotification('success', `已选择 ${selectedFiles.length} 个文件`);
+                }
+            });
+        }
+        
+        // 初始化按钮事件
+        function initButtonEvents() {
+            // 上传按钮
+            document.getElementById('uploadBtn').addEventListener('click', function() {
+                uploadFiles();
+            });
+            
+            // 清除按钮
+            document.getElementById('clearBtn').addEventListener('click', function() {
+                selectedFiles = [];
+                document.getElementById('fileUpload').value = '';
+                updateUploadHistory();
+                showNotification('info', '已清除选择的文件');
+            });
+            
+            // 刷新按钮
+            document.getElementById('refreshBtn').addEventListener('click', function() {
+                refreshFileList();
+            });
+            
+            // 创建文件夹按钮
+            document.getElementById('confirmCreateFolderBtn').addEventListener('click', function() {
+                createNewFolder();
+            });
+            
+            // 下载预览文件按钮
+            document.getElementById('downloadPreviewBtn').addEventListener('click', function() {
+                if (currentFile) {
+                    downloadFile(currentFile);
+                }
+            });
+        }
+        
+        // 上传文件
+        function uploadFiles() {
+            if (selectedFiles.length === 0) {
+                showNotification('warning', '请先选择要上传的文件');
+                return;
+            }
+            
+            const targetFolder = document.getElementById('targetFolder').value;
+            const storagePolicy = document.getElementById('storagePolicy').value;
+            const enableCompression = document.getElementById('enableCompression').checked;
+            const enableEncryption = document.getElementById('enableEncryption').checked;
+            const generateThumbnail = document.getElementById('generateThumbnail').checked;
+            
+            // 显示加载指示器
+            showLoading(true);
+            
+            // 模拟上传过程
+            const uploadProgress = document.getElementById('uploadProgress');
+            uploadProgress.style.display = 'block';
+            const progressBar = uploadProgress.querySelector('.progress-bar');
+            
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 5;
+                progressBar.style.width = `${progress}%`;
+                progressBar.setAttribute('aria-valuenow', progress);
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    
+                    // 模拟API调用延迟
+                    setTimeout(() => {
+                        // 隐藏加载指示器
+                        showLoading(false);
+                        uploadProgress.style.display = 'none';
+                        progressBar.style.width = '0%';
+                        
+                        // 清空选择的文件
+                        selectedFiles = [];
+                        document.getElementById('fileUpload').value = '';
+                        updateUploadHistory();
+                        
+                        // 显示成功通知
+                        showNotification('success', `成功上传 ${selectedFiles.length} 个文件`);
+                        
+                        // 刷新文件列表
+                        refreshFileList();
+                    }, 500);
+                }
+            }, 200);
+        }
+        
+        // 刷新文件列表
+        function refreshFileList() {
+            showLoading(true);
+            
+            // 模拟API调用
+            setTimeout(() => {
+                showLoading(false);
+                showNotification('success', '文件列表已刷新');
+            }, 800);
+        }
+        
+        // 预览文件
+        function previewFile(fileName) {
+            currentFile = fileName;
+            
+            // 更新模态框标题
+            document.getElementById('filePreviewModalLabel').textContent = `预览: ${fileName}`;
+            
+            // 显示加载中
+            const previewContent = document.getElementById('previewContent');
+            previewContent.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="fas fa-spinner fa-spin text-muted" style="font-size: 3rem;"></i>
+                    <p class="mt-2 text-muted">加载中...</p>
+                </div>
+            `;
+            
+            // 显示模态框
+            const filePreviewModal = new bootstrap.Modal(document.getElementById('filePreviewModal'));
+            filePreviewModal.show();
+            
+            // 根据文件类型显示不同的预览内容
+            setTimeout(() => {
+                let previewHtml = '';
+                
+                if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || fileName.endsWith('.png') || fileName.endsWith('.gif')) {
+                    // 图片预览
+                    previewHtml = `
+                        <img src="https://via.placeholder.com/800x600?text=File+Preview:+${fileName}" class="preview-image" alt="图片预览">
+                    `;
+                } else if (fileName.endsWith('.pdf')) {
+                    // PDF预览
+                    previewHtml = `
+                        <div class="text-center py-4">
+                            <i class="fas fa-file-pdf text-danger" style="font-size: 6rem;"></i>
+                            <p class="mt-4 text-muted">PDF文件预览需要浏览器支持或第三方插件</p>
+                            <p class="text-sm text-muted">文件名: ${fileName}</p>
+                        </div>
+                    `;
+                } else if (fileName.endsWith('.txt')) {
+                    // 文本文件预览
+                    previewHtml = `
+                        <pre class="preview-text p-4 bg-light rounded">这是文本文件预览内容的示例。
+在实际项目中，这里会显示文本文件的实际内容。
+文件名: ${fileName}
+创建时间: 2024-01-15
+文件大小: 1.2 KB
+
+这是一个示例文本文件，用于演示文件预览功能。
+在实际应用中，文件内容将从服务器加载并显示在这里。</pre>
+                    `;
+                } else if (fileName.endsWith('.doc') || fileName.endsWith('.docx') || fileName.endsWith('.xls') || fileName.endsWith('.xlsx')) {
+                    // Office文档预览
+                    previewHtml = `
+                        <div class="text-center py-4">
+                            <i class="fas fa-file-word text-primary" style="font-size: 6rem;"></i>
+                            <p class="mt-4 text-muted">Office文档预览需要特定的预览组件或服务</p>
+                            <p class="text-sm text-muted">文件名: ${fileName}</p>
+                        </div>
+                    `;
+                } else {
+                    // 不支持预览的文件类型
+                    previewHtml = `
+                        <div class="text-center py-4">
+                            <i class="fas fa-file text-muted" style="font-size: 6rem;"></i>
+                            <p class="mt-4 text-muted">该文件类型不支持在线预览</p>
+                            <p class="text-sm text-muted">文件名: ${fileName}</p>
+                            <button class="btn btn-primary mt-2" onclick="downloadFile('${fileName}')">
+                                <i class="fas fa-download mr-2"></i>下载文件
+                            </button>
+                        </div>
+                    `;
+                }
+                
+                previewContent.innerHTML = previewHtml;
+            }, 1000);
+        }
+        
+        // 下载文件
+        function downloadFile(fileName) {
+            showNotification('info', `正在下载文件: ${fileName}`);
+            
+            // 在实际项目中，这里会构建一个下载链接并触发下载
+            // 这里只是模拟下载过程
+            setTimeout(() => {
+                showNotification('success', `文件 ${fileName} 下载完成`);
+            }, 1000);
+        }
+        
+        // 删除文件
+        function deleteFile(fileName) {
+            if (confirm(`确定要删除文件 "${fileName}" 吗？此操作无法撤销。`)) {
+                showLoading(true);
+                
+                // 模拟API调用
+                setTimeout(() => {
+                    showLoading(false);
+                    showNotification('success', `文件 ${fileName} 已删除`);
+                    refreshFileList();
+                }, 800);
+            }
+        }
+        
+        // 重命名文件
+        function renameFile(fileName) {
+            const newName = prompt(`请输入新文件名:`, fileName);
+            
+            if (newName && newName !== fileName) {
+                showLoading(true);
+                
+                // 模拟API调用
+                setTimeout(() => {
+                    showLoading(false);
+                    showNotification('success', `文件已重命名为: ${newName}`);
+                    refreshFileList();
+                }, 800);
+            }
+        }
+        
+        // 复制文件链接
+        function copyFileLink(fileName) {
+            // 模拟复制链接
+            const fileUrl = `http://localhost:8080/api/files/download/${fileName}`;
+            
+            // 使用 Clipboard API 复制文本
+            navigator.clipboard.writeText(fileUrl).then(() => {
+                showNotification('success', '文件链接已复制到剪贴板');
+            }).catch(err => {
+                showNotification('error', '复制失败，请手动复制: ' + fileUrl);
+            });
+        }
+        
+        // 导航到文件夹
+        function navigateToFolder(folderPath) {
+            currentFolder = folderPath;
+            showLoading(true);
+            
+            // 模拟API调用
+            setTimeout(() => {
+                showLoading(false);
+                showNotification('info', `已导航到: ${folderPath}`);
+                
+                // 更新面包屑导航（实际项目中应该更详细地实现）
+                const breadcrumb = document.querySelector('.breadcrumb');
+                if (folderPath === '/') {
+                    breadcrumb.innerHTML = `
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item active" aria-current="page">根目录</li>
+                        </ol>
+                    `;
+                } else {
+                    const folderName = folderPath.split('/').pop();
+                    breadcrumb.innerHTML = `
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item"><a href="#" onclick="navigateToFolder('/')">根目录</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">${folderName}</li>
+                        </ol>
+                    `;
+                }
+            }, 800);
+            
+            return false; // 阻止链接默认行为
+        }
+        
+        // 创建新文件夹
+        function createNewFolder() {
+            const folderName = document.getElementById('newFolderName').value.trim();
+            const parentFolder = document.getElementById('newFolderParent').value;
+            
+            if (!folderName) {
+                showNotification('warning', '请输入文件夹名称');
+                return;
+            }
+            
+            showLoading(true);
+            
+            // 模拟API调用
+            setTimeout(() => {
+                showLoading(false);
+                
+                // 关闭模态框
+                const createFolderModal = bootstrap.Modal.getInstance(document.getElementById('createFolderModal'));
+                createFolderModal.hide();
+                
+                // 清空输入框
+                document.getElementById('newFolderName').value = '';
+                
+                showNotification('success', `文件夹 "${folderName}" 已创建`);
+                refreshFileList();
+            }, 800);
+        }
+        
+        // 删除文件夹
+        function deleteFolder(folderPath) {
+            const folderName = folderPath.split('/').pop();
+            
+            if (confirm(`确定要删除文件夹 "${folderName}" 吗？此操作无法撤销。`)) {
+                showLoading(true);
+                
+                // 模拟API调用
+                setTimeout(() => {
+                    showLoading(false);
+                    showNotification('success', `文件夹 ${folderName} 已删除`);
+                    refreshFileList();
+                }, 800);
+            }
+        }
+        
+        // 重命名文件夹
+        function renameFolder(folderPath) {
+            const folderName = folderPath.split('/').pop();
+            const newName = prompt(`请输入新文件夹名:`, folderName);
+            
+            if (newName && newName !== folderName) {
+                showLoading(true);
+                
+                // 模拟API调用
+                setTimeout(() => {
+                    showLoading(false);
+                    showNotification('success', `文件夹已重命名为: ${newName}`);
+                    refreshFileList();
+                }, 800);
+            }
+        }
+        
+        // 显示加载指示器
+        function showLoading(show) {
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            loadingIndicator.style.display = show ? 'block' : 'none';
+        }
+        
+        // 显示通知
+        function showNotification(type, message) {
+            const notificationTypes = {
+                success: 'success',
+                error: 'danger',
+                warning: 'warning',
+                info: 'info'
+            };
+            
+            const notificationClasses = {
+                success: 'alert-success',
+                error: 'alert-danger',
+                warning: 'alert-warning',
+                info: 'alert-info'
+            };
+            
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                warning: 'fa-exclamation-triangle',
+                info: 'fa-info-circle'
+            };
+            
+            // 创建通知元素
+            const alert = document.createElement('div');
+            alert.className = `alert ${notificationClasses[type]} alert-dismissible fade show`;
+            alert.role = 'alert';
+            alert.innerHTML = `
+                <i class="fas ${icons[type]} mr-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            
+            // 添加到页面
+            document.body.appendChild(alert);
+            
+            // 自动关闭通知
+            setTimeout(() => {
+                alert.classList.remove('show');
+                setTimeout(() => {
+                    document.body.removeChild(alert);
+                }, 300);
+            }, 3000);
+        }
+        
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+    </script>
+</body>
+</html>
